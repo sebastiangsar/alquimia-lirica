@@ -3,14 +3,18 @@ import streamlit as st
 import streamlit.components.v1 as components
 from groq import Groq
 
-# 1. Configuración de página
+# 1. Configuración de página al inicio absoluto
 st.set_page_config(page_title="Alquimia Lírica (Hawkins)", page_icon="🎵", layout="centered")
 
 st.title("🎵 Alquimia Lírica")
-st.caption("Estructura musical, mapa de Hawkins, viralidad y transmutación lírica")
+st.caption("Estructura musical, resonancia viral de Hawkins y transmutación lírica")
 
-# Memoria de sesión
-for k in ["letra_esc_orig", "letra_esc_es", "analisis_hawkins", "letra_trans_en", "letra_trans_es", "groq_chat_model"]:
+# Memoria de sesión limpia y persistente
+claves_estado = [
+    "letra_esc_orig", "letra_esc_es", "analisis_hawkins", 
+    "letra_trans_en", "letra_trans_es"
+]
+for k in claves_estado:
     if k not in st.session_state:
         st.session_state[k] = None
 
@@ -22,7 +26,9 @@ try:
 except Exception:
     pass
 
-# BASE DE DATOS DE LA ESCALA DE HAWKINS
+# ==============================================================
+# MAPA COMPLETO DE HAWKINS: VIRALIDAD + TEMAS BAJOS Y ALTOS
+# ==============================================================
 HAWKINS_SCALE = {
     20: {
         "nombre": "Vergüenza (20)",
@@ -91,7 +97,7 @@ HAWKINS_SCALE = {
         "nombre": "Orgullo (175)",
         "emocion": "Superioridad / Egolatría",
         "viralidad": "95%",
-        "tipo_viral": "Flexing, presumir logros, 'ahora mírame triunfar' (Hip Hop / Corridos).",
+        "tipo_viral": "Flexing, presumir riqueza y fama, 'nadie creía en mí' (Hip Hop / Corridos).",
         "color": "#e11d48",
         "temas_baja": ["Mírame en la cima y tú abajo", "No necesito de nadie para ganar", "Soy mejor que todos ustedes"],
         "temas_alta": ["Orgullo sano de mis raíces", "Honrar las cicatrices de la victoria", "Celebrar el triunfo con humildad"]
@@ -170,36 +176,43 @@ HAWKINS_SCALE = {
     }
 }
 
-def obtener_modelo_activo(client):
-    if st.session_state.groq_chat_model:
-        return st.session_state.groq_chat_model
-
-    modelo_detectado = None
+# ==============================================================
+# MOTOR GROQ CON FALLBACK AUTOMÁTICO (CONTRA ERRORES 404)
+# ==============================================================
+def llamar_groq_seguro(client, mensajes, temperature=0.3):
+    """Prueba dinámicamente los modelos activos de tu cuenta de Groq sin dar nunca error 404"""
+    candidatos = []
     try:
         modelos_api = [m.id for m in client.models.list().data]
         chat_models = [
             m for m in modelos_api 
             if not any(x in m.lower() for x in ["whisper", "guard", "audio", "orpheus", "embed", "tts", "stt"])
         ]
-        prioridad = [
-            "openai/gpt-oss-120b", "openai/gpt-oss-20b",
-            "qwen/qwen3.8-27b", "llama-3.3-70b-versatile",
-            "llama-3.1-8b-instant"
-        ]
-        for p in prioridad:
-            if p in chat_models:
-                modelo_detectado = p
-                break
-        if not modelo_detectado and chat_models:
-            modelo_detectado = chat_models[0]
+        candidatos = chat_models
     except Exception:
         pass
 
-    if not modelo_detectado:
-        modelo_detectado = "openai/gpt-oss-120b"
+    if not candidatos:
+        candidatos = [
+            "openai/gpt-oss-120b", "openai/gpt-oss-20b", 
+            "qwen/qwen3.8-27b", "llama-3.3-70b-versatile", 
+            "llama-3.1-8b-instant"
+        ]
 
-    st.session_state.groq_chat_model = modelo_detectado
-    return modelo_detectado
+    ultimo_error = None
+    for mod in candidatos:
+        try:
+            res = client.chat.completions.create(
+                model=mod,
+                messages=mensajes,
+                temperature=temperature
+            )
+            return res.choices[0].message.content
+        except Exception as e:
+            ultimo_error = e
+            continue
+
+    raise Exception(f"Error al conectar con los modelos de Groq: {ultimo_error}")
 
 # BARRA LATERAL
 with st.sidebar:
@@ -245,32 +258,27 @@ def boton_copiar(texto, id_btn="copiar"):
 
 def estructurar_letra_musical(letra_cruda, api_key):
     client = Groq(api_key=api_key)
-    modelo = obtener_modelo_activo(client)
-    
     instruccion = (
         "Eres un productor musical. Organiza este texto en bloques musicales con corchetes: "
         "[Verse 1], [Pre-Chorus], [Chorus], [Verse 2], [Bridge], [Chorus], [Outro]. "
         "Separa cada bloque con doble salto de línea (\\n\\n). Cada verso en una línea individual."
     )
-    res_orig = client.chat.completions.create(
-        model=modelo,
-        messages=[{"role": "system", "content": instruccion}, {"role": "user", "content": letra_cruda}],
+    letra_orig = llamar_groq_seguro(
+        client, 
+        [{"role": "system", "content": instruccion}, {"role": "user", "content": letra_cruda}], 
         temperature=0.2
     )
-    letra_orig = res_orig.choices[0].message.content
 
     instruccion_es = "Traduce al español manteniendo exactamente las etiquetas [Verso 1], [Coro], etc. y los dobles saltos de línea."
-    res_es = client.chat.completions.create(
-        model=modelo,
-        messages=[{"role": "system", "content": instruccion_es}, {"role": "user", "content": letra_orig}],
+    letra_es = llamar_groq_seguro(
+        client, 
+        [{"role": "system", "content": instruccion_es}, {"role": "user", "content": letra_orig}], 
         temperature=0.2
     )
-    return letra_orig, res_es.choices[0].message.content
+    return letra_orig, letra_es
 
 def calibrar_hawkins_estructurado(letra_texto, api_key):
     client = Groq(api_key=api_key)
-    modelo = obtener_modelo_activo(client)
-    
     prompt = f"""Analiza la siguiente letra según la Escala de Hawkins (20 a 600 puntos):
 \"\"\"{letra_texto}\"\"\"
 
@@ -279,12 +287,8 @@ FRECUENCIA: [Emoción y puntos]
 ELEVACION: [Frecuencia opuesta sugerida]
 CLAVE: [Concepto clave de transformación]"""
 
-    res = client.chat.completions.create(
-        model=modelo,
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.2
-    )
-    lineas = res.choices[0].message.content.split("\n")
+    contenido = llamar_groq_seguro(client, [{"role": "user", "content": prompt}], temperature=0.2)
+    lineas = contenido.split("\n")
     datos = {"frecuencia": "Culpa (30 puntos)", "elevacion": "Aceptación (350)", "clave": "Perdón y redención"}
     for l in lineas:
         if l.startswith("FRECUENCIA:"):
@@ -297,7 +301,6 @@ CLAVE: [Concepto clave de transformación]"""
 
 def transmutar_letra_directa(letra_base, frec_num, rima_tipo, modo, tema, api_key):
     client = Groq(api_key=api_key)
-    modelo = obtener_modelo_activo(client)
     frec_info = HAWKINS_SCALE.get(frec_num, HAWKINS_SCALE[500])
 
     if modo == "misma":
@@ -328,13 +331,8 @@ ENTREGA OBLIGATORIA:
 Entrega primero la versión en ESPAÑOL, luego exactamente la línea de separación "=== DIVISION_IDIOMA ===", y después la versión en INGLÉS adaptada.
 """
 
-    res = client.chat.completions.create(
-        model=modelo,
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.4
-    )
+    contenido = llamar_groq_seguro(client, [{"role": "user", "content": prompt}], temperature=0.4)
 
-    contenido = res.choices[0].message.content
     if "=== DIVISION_IDIOMA ===" in contenido:
         partes = contenido.split("=== DIVISION_IDIOMA ===")
         return partes[0].strip(), partes[1].strip()
@@ -501,7 +499,7 @@ if st.button("Transmutar", type="primary", key="btn_transmutar"):
                     st.session_state.letra_trans_es = es_txt
                     st.session_state.letra_trans_en = en_txt
                 except Exception as e:
-                    st.error(f"Error de conexión: {e}")
+                    st.error(f"Error de conexión con Groq: {e}")
 
 # CUADRO QUE SE ABRE INMEDIATAMENTE DEBAJO DEL BOTÓN
 if st.session_state.letra_trans_es:

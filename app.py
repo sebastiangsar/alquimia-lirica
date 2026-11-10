@@ -7,7 +7,7 @@ from groq import Groq
 st.set_page_config(page_title="Alquimia Lírica (Hawkins)", page_icon="🎵", layout="centered")
 
 st.title("🎵 Alquimia Lírica")
-st.caption("Estructura musical, resonancia viral de Hawkins y transmutación poética")
+st.caption("Estructura musical, resonancia viral de Hawkins y transmutación poética rítmica")
 
 # Memoria de sesión limpia y persistente
 claves_estado = [
@@ -180,7 +180,6 @@ HAWKINS_SCALE = {
 # MOTOR GROQ CON ANTI-BUCLE Y REINTENTO DINÁMICO
 # ==============================================================
 def llamar_groq_seguro(client, mensajes, temperature=0.6, anti_bucle=True):
-    """Llama a Groq evitando bucles de palabras repetidas y saltando modelos caídos"""
     candidatos = []
     try:
         modelos_api = [m.id for m in client.models.list().data]
@@ -204,7 +203,6 @@ def llamar_groq_seguro(client, mensajes, temperature=0.6, anti_bucle=True):
         "temperature": temperature,
     }
     
-    # Penalizaciones estrictas para destruir repeticiones como 'breathe, breathe...'
     if anti_bucle:
         kwargs["frequency_penalty"] = 0.5
         kwargs["presence_penalty"] = 0.4
@@ -269,9 +267,10 @@ def boton_copiar(texto, id_btn="copiar"):
     components.html(html_code, height=45)
 
 def estructurar_letra_musical(letra_cruda, api_key):
+    """Estructura la letra original y genera una adaptación al español que RIME con sentido poético"""
     client = Groq(api_key=api_key)
     instruccion = (
-        "Eres un productor y compositor musical de élite. Organiza este texto lírico en bloques musicales formales:\n"
+        "Eres un productor y letrista musical de élite. Organiza este texto lírico en bloques musicales formales:\n"
         "[Verse 1], [Pre-Chorus], [Chorus], [Verse 2], [Bridge], [Chorus], [Outro].\n"
         "Separa cada bloque con doble salto de línea (\\n\\n). Cada verso en una línea individual."
     )
@@ -281,30 +280,56 @@ def estructurar_letra_musical(letra_cruda, api_key):
         temperature=0.3
     )
 
-    instruccion_es = "Traduce al español manteniendo exactamente las etiquetas [Verso 1], [Coro], etc. y los dobles saltos de línea."
+    instruccion_es = (
+        "Eres un adaptador lírico y letrista profesional. NO hagas una traducción literal palabra por palabra.\n"
+        "Tu misión es hacer una ADAPTACIÓN POÉTICA Y MUSICAL AL ESPAÑOL:\n"
+        "1. Adapta las frases para que RIMEN de forma natural y mantengan la métrica y ritmo para cantar.\n"
+        "2. Mantén intacto el sentido emocional, el mensaje y las imágenes de la canción original.\n"
+        "3. Conserva las etiquetas musicales entre corchetes [Verso 1], [Coro], etc., separadas por doble salto de línea."
+    )
     letra_es = llamar_groq_seguro(
         client, 
         [{"role": "system", "content": instruccion_es}, {"role": "user", "content": letra_orig}], 
-        temperature=0.3
+        temperature=0.4
     )
     return letra_orig, letra_es
 
 def calibrar_hawkins_estructurado(letra_texto, api_key):
+    """Analiza directamente la letra del primer cuadro en la escala de Hawkins y su viralidad"""
     client = Groq(api_key=api_key)
-    prompt = f"""Analiza la siguiente letra según la Escala de Hawkins (20 a 600 puntos):
+    prompt = f"""Eres un analista de psicología musical y del Mapa de Conciencia de David R. Hawkins (Power vs. Force).
+Analiza a fondo el texto de la siguiente canción:
 \"\"\"{letra_texto}\"\"\"
 
-Responde exactamente con estas líneas:
+Determina:
+1. Frecuencia vibracional dominante en la escala Hawkins (20 a 600 puntos).
+2. Grado de Viralidad y Conexión Emocional (0 a 100%) y el motivo psicológico (por qué conecta con la gente, desahogo, despecho, etc.).
+3. Frecuencia Opuesta de Elevación sugerida.
+4. Clave de Transmutación (concepto central para elevar el mensaje).
+
+Responde exactamente con líneas que comiencen con estas etiquetas:
 FRECUENCIA: [Emoción y puntos]
-ELEVACION: [Frecuencia opuesta sugerida]
-CLAVE: [Concepto clave de transformación]"""
+VIRALIDAD: [Porcentaje 0-100% y explicación breve del fenómeno de conexión/catarsis]
+PATRON: [1 frase explicando el dolor, rencor o apego del texto]
+ELEVACION: [Nivel de alta frecuencia hacia donde elevar]
+CLAVE: [Concepto central de redención o soberanía]"""
 
     contenido = llamar_groq_seguro(client, [{"role": "user", "content": prompt}], temperature=0.2, anti_bucle=False)
     lineas = contenido.split("\n")
-    datos = {"frecuencia": "Culpa (30 puntos)", "elevacion": "Aceptación (350)", "clave": "Perdón y redención"}
+    datos = {
+        "frecuencia": "Culpa (30 puntos)", 
+        "viralidad": "92% - Muy Alta (Conexión por Catarsis Colectiva)",
+        "patron": "Carga de apego o remordimiento en la narrativa.",
+        "elevacion": "Aceptación (350) / Amor Incondicional (500)", 
+        "clave": "Perdón y soberanía personal"
+    }
     for l in lineas:
         if l.startswith("FRECUENCIA:"):
             datos["frecuencia"] = l.replace("FRECUENCIA:", "").strip()
+        elif l.startswith("VIRALIDAD:"):
+            datos["viralidad"] = l.replace("VIRALIDAD:", "").strip()
+        elif l.startswith("PATRON:"):
+            datos["patron"] = l.replace("PATRON:", "").strip()
         elif l.startswith("ELEVACION:"):
             datos["elevacion"] = l.replace("ELEVACION:", "").strip()
         elif l.startswith("CLAVE:"):
@@ -312,7 +337,7 @@ CLAVE: [Concepto clave de transformación]"""
     return datos
 
 def transmutar_letra_poetica_avanzada(letra_base, frec_num, rima_tipo, modo, tema, api_key):
-    """Compositor lírico con copywriting emocional, imágenes mentales y palabras simples cotidianas"""
+    """Compone en Español con rima y copywriting, y genera la adaptación en Inglés garantizada con rima métrica"""
     client = Groq(api_key=api_key)
     frec_info = HAWKINS_SCALE.get(frec_num, HAWKINS_SCALE[500])
 
@@ -328,99 +353,128 @@ def transmutar_letra_poetica_avanzada(letra_base, frec_num, rima_tipo, modo, tem
             f"- Toda la narrativa debe vibrar en el campo de: {frec_info['nombre']} ({frec_info['emocion']})."
         )
 
-    prompt = f"""Eres un letrista galardonado y redactor publicitario (copywriter) emocional de nivel mundial.
+    # FASE 1: Componer la letra en ESPAÑOL con rima estricta y copywriting emocional
+    prompt_es = f"""Eres un letrista y compositor de élite galardonado.
 Tu maestría radica en escribir letras que conmueven profundamente usando LENGUAJE SIMPLE, VISUAL Y COTIDIANO.
 
 {enfoque_prompt}
 
-DIRECTRICES LÍRICAS OBLIGATORIAS (COPYWRITING EMOCIONAL):
-1. PALABRAS SIMPLES Y HUMANAS: Prohibido usar palabras rebuscadas, arcaicas o de diccionario enciclopédico. Usa palabras que cualquier persona diría en una charla sincera o en la calle.
-2. CREA IMÁGENES MENTALES SENSORIALES: En lugar de hablar de conceptos abstractos, usa objetos, lugares concretos, miradas, el frío en las manos, el café en la mesa, las luces de la calle, el reloj. Haz que quien escuche "vea una película en su mente".
-3. CERO REPETICIÓN MONÓTONA: Prohibido repetir la misma palabra una y otra vez. Desarrolla una historia con ritmo, variedad y contraste emocional.
-4. ESTRUCTURA RÍTMICA: 
-   - Esquema de rima estricto en cada estrofa: {rima_tipo}.
-   - Bloques obligatorios separados por salto doble (\\n\\n):
-     [Verso 1]
-     [Pre-Coro]
-     [Coro]
-     [Verso 2]
-     [Puente]
-     [Coro Final]
-     [Outro]
+DIRECTRICES LÍRICAS OBLIGATORIAS:
+1. PALABRAS SIMPLES Y HUMANAS: Cero palabras rebuscadas de diccionario. Usa frases reales y coloquiales.
+2. IMÁGENES MENTALES SENSORIALES: Incluye objetos reales, miradas, el frío, el teléfono, las calles, lugares concretos. Crea una película en la mente del oyente.
+3. ESQUEMA DE RIMA OBLIGATORIO: {rima_tipo}. Cada estrofa debe rimar de forma limpia y musical.
+4. ESTRUCTURA: [Verso 1], [Pre-Coro], [Coro], [Verso 2], [Puente], [Coro Final], [Outro].
+   Separa cada bloque con doble salto de línea (\\n\\n).
 
-LETRA DE REFERENCIA ORIGINAL:
+LETRA DE REFERENCIA:
 \"\"\"{letra_base}\"\"\"
 
-ENTREGA FORMATEADA:
-Escribe primero la versión lírica en ESPAÑOL, luego exactamente la línea separadora "=== DIVISION_IDIOMA ===", y finalmente la adaptación lírica en INGLÉS manteniendo las imágenes mentales y la rima.
+Devuelve ÚNICAMENTE la letra en Español con sus bloques musicales.
 """
+    letra_es = llamar_groq_seguro(client, [{"role": "user", "content": prompt_es}], temperature=0.6, anti_bucle=True)
 
-    contenido = llamar_groq_seguro(client, [{"role": "user", "content": prompt}], temperature=0.6, anti_bucle=True)
+    # FASE 2: Adaptación poética al INGLÉS (NO LITERAL, adaptando para que rime y mantenga sentido y métrica)
+    prompt_en = f"""You are a master lyrical adapter and hit songwriter in English.
+Take the following Spanish song lyrics and create a professional, radio-ready ENGLISH LYRICAL ADAPTATION.
 
-    if "=== DIVISION_IDIOMA ===" in contenido:
-        partes = contenido.split("=== DIVISION_IDIOMA ===")
-        return partes[0].strip(), partes[1].strip()
-    else:
-        return contenido.strip(), contenido.strip()
+CRITICAL RULES (TRANS-ADAPTATION, NOT LITERAL TRANSLATION):
+1. DO NOT translate literally word-for-word. Adapt the lyrics into natural, catchy, modern English idioms.
+2. PRESERVE THE EMOTIONAL MESSAGE: Keep the exact narrative, emotional impact, and visual imagery.
+3. RHYME SCHEME REQUIREMENT: Enforce the rhyme scheme: {rima_tipo} across all stanzas in English. The lines MUST naturally rhyme.
+4. SINGABILITY: Match the syllable count and rhythmic cadence so it can be sung over the same musical beat.
+5. Keep the exact section tags [Verse 1], [Chorus], etc. separated by double newlines (\\n\\n).
+
+SPANISH SOURCE LYRICS:
+\"\"\"{letra_es}\"\"\"
+
+Output ONLY the English song lyrics.
+"""
+    letra_en = llamar_groq_seguro(client, [{"role": "user", "content": prompt_en}], temperature=0.6, anti_bucle=True)
+
+    return letra_es, letra_en
 
 # ==============================================================
-# FASE 1: ENTRADA LIMPIA (SIN NADA DE INFORMACIÓN PREVIA)
+# FASE 1: ENTRADA LIMPIA (EL PRIMER CAJÓN)
 # ==============================================================
 letra_manual = st.text_area(
     "Pega aquí la letra de la canción:",
-    height=160,
-    placeholder="Pega aquí los versos de la canción que quieres analizar..."
+    height=170,
+    placeholder="Pega aquí los versos de la canción que quieres analizar o transformar..."
 )
 
-# 1. BOTÓN: ESCANEAR
-if st.button("Escanear", type="primary", key="btn_escanear"):
+col_btn_esc, col_btn_cal = st.columns([1, 1])
+
+with col_btn_esc:
+    btn_escanear = st.button("Escanear", type="primary", key="btn_escanear")
+
+with col_btn_cal:
+    btn_calibrar_directo = st.button("Calibrar", key="btn_calibrar_directo")
+
+# 1. BOTÓN: ESCANEAR (Estructura y traducción poética que rima)
+if btn_escanear:
     if not GROQ_API_KEY.strip():
         st.error("Ingresa tu Groq API Key en la barra lateral.")
     elif not letra_manual.strip():
         st.warning("Pega la letra de la canción antes de escanear.")
     else:
-        with st.spinner("Estructurando bloques musicales..."):
+        with st.spinner("Estructurando bloques musicales y creando traducción adaptada con rima..."):
             try:
                 orig, es = estructurar_letra_musical(letra_manual.strip(), GROQ_API_KEY)
                 st.session_state.letra_esc_orig = orig
                 st.session_state.letra_esc_es = es
-                st.session_state.analisis_hawkins = None
-                st.session_state.letra_trans_en = None
-                st.session_state.letra_trans_es = None
             except Exception as e:
                 st.error(f"Error al estructurar: {e}")
 
+# 2. BOTÓN: CALIBRAR (Analiza directamente la letra del primer cajón)
+if btn_calibrar_directo:
+    texto_a_calibrar = letra_manual.strip() or st.session_state.letra_esc_orig
+    if not GROQ_API_KEY.strip():
+        st.error("Ingresa tu Groq API Key en la barra lateral.")
+    elif not texto_a_calibrar:
+        st.warning("Pega una letra en el primer cajón para poder calibrar su frecuencia.")
+    else:
+        with st.spinner("Analizando la letra del primer cajón en la escala Hawkins y midiendo viralidad..."):
+            try:
+                st.session_state.analisis_hawkins = calibrar_hawkins_estructurado(texto_a_calibrar, GROQ_API_KEY)
+            except Exception as e:
+                st.error(f"Error al calibrar: {e}")
+
 # ==============================================================
-# FASE 2: SOLO APARECE DESPUÉS DE HABER ESCANEADO
+# FASE 2: MUESTRA RESULTADOS CUANDO SE ESCANEA O CALIBRA
 # ==============================================================
+# Mostrar estructura si existe
 if st.session_state.letra_esc_orig:
     st.markdown("---")
     st.markdown("#### 🎼 Letra Estructurada")
-    tab_l_orig, tab_l_es = st.tabs(["🌐 Original", "🇪🇸 Traducción al Español"])
+    tab_l_orig, tab_l_es = st.tabs(["🌐 Original", "🇪🇸 Adaptación en Español (Con Rima)"])
     with tab_l_orig:
         boton_copiar(st.session_state.letra_esc_orig, id_btn="cp_esc_orig")
         st.text_area("Original", value=st.session_state.letra_esc_orig, height=180)
     with tab_l_es:
         boton_copiar(st.session_state.letra_esc_es, id_btn="cp_esc_es")
-        st.text_area("Español", value=st.session_state.letra_esc_es, height=180)
+        st.text_area("Español Adaptado", value=st.session_state.letra_esc_es, height=180)
 
-    # 2. BOTÓN: CALIBRAR
-    if st.button("Calibrar", key="btn_calibrar"):
-        with st.spinner("Midiendo frecuencia de la canción..."):
-            try:
-                st.session_state.analisis_hawkins = calibrar_hawkins_estructurado(
-                    st.session_state.letra_esc_orig, GROQ_API_KEY
-                )
-            except Exception as e:
-                st.error(f"Error al calibrar: {e}")
+# Mostrar tarjeta de diagnóstico si se calibró
+if st.session_state.analisis_hawkins:
+    h = st.session_state.analisis_hawkins
+    frec_str = h.get("frecuencia", "")
 
-    if st.session_state.analisis_hawkins:
-        h = st.session_state.analisis_hawkins
-        st.info(f"📊 **Frecuencia Detectada:** {h.get('frecuencia')} | **Elevación:** {h.get('elevacion')} | **Clave:** {h.get('clave')}")
+    st.markdown("---")
+    st.markdown(f"""<div style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%); border-left: 6px solid #f43f5e; padding: 18px 22px; border-radius: 12px; margin: 15px 0;">
+<h4 style="margin: 0 0 10px 0; color: #fb7185; font-size: 18px;">📊 Diagnóstico de la Letra: <span style="color: #ffffff; text-decoration: underline;">{frec_str}</span></h4>
+<p style="margin: 6px 0; color: #38bdf8; font-size: 15px;"><b>🔥 Potencial Viral / Conexión Emocional:</b> <span style="color: #ffffff; font-weight: bold;">{h.get('viralidad')}</span></p>
+<p style="margin: 6px 0; color: #e2e8f0; font-size: 14px;"><b>⚠️ Patrón Psicológico Detectado:</b> {h.get('patron')}</p>
+<p style="margin: 6px 0; color: #34d399; font-size: 15px;"><b>✨ Frecuencia de Elevación recomendada:</b> {h.get('elevacion')}</p>
+<p style="margin: 6px 0; color: #c084fc; font-size: 14px;"><b>🔑 Clave de Transmutación:</b> {h.get('clave')}</p>
+</div>""", unsafe_allow_html=True)
 
-    # ==============================================================
-    # SLIDER HAWKINS + VIRALIDAD + TEMAS
-    # ==============================================================
+# ==============================================================
+# FASE 3: SLIDER Y PANEL DE TRANSMUTACIÓN
+# (Solo visible si ya hay letra ingresada en el cajón o escaneada)
+# ==============================================================
+hay_letra = bool(letra_manual.strip() or st.session_state.letra_esc_orig)
+
+if hay_letra:
     st.markdown("---")
     st.markdown("### 🎚️ Escala de Vibración & Conexión Viral (Hawkins)")
     st.caption("Desliza para elegir la frecuencia destino y descubrir los temas de alta o baja vibración:")
@@ -515,12 +569,13 @@ if st.session_state.letra_esc_orig:
         elif modo_elegido == "Tema libre personalizado" and not tema_para_enviar.strip():
             st.warning("Por favor escribe la temática que deseas.")
         else:
+            letra_base_final = st.session_state.letra_esc_orig or letra_manual.strip()
             modo_codigo = "misma" if modo_elegido == "Elevar la misma historia original" else "nuevo"
             
-            with st.spinner("Componiendo con imágenes visuales y copywriting emocional (Español e Inglés)..."):
+            with st.spinner("Componiendo en Español con rima y creando adaptación lírica al Inglés..."):
                 try:
                     es_txt, en_txt = transmutar_letra_poetica_avanzada(
-                        letra_base=st.session_state.letra_esc_orig,
+                        letra_base=letra_base_final,
                         frec_num=frec_seleccionada,
                         rima_tipo=tipo_rima_elegida,
                         modo=modo_codigo,
@@ -532,17 +587,17 @@ if st.session_state.letra_esc_orig:
                 except Exception as e:
                     st.error(f"Error de conexión con Groq: {e}")
 
-    # CUADRO QUE SE ABRE INMEDIATAMENTE DEBAJO DEL BOTÓN
-    if st.session_state.letra_trans_es:
+    # CUADRO CON AMBAS VERSIONES CON RIMA (ESPAÑOL E INGLÉS)
+    if st.session_state.letra_trans_es and st.session_state.letra_trans_en:
         st.markdown("---")
         st.markdown("""<div style="background-color: #064e3b; border-left: 6px solid #10b981; padding: 14px 20px; border-radius: 8px; margin: 15px 0;">
-<h4 style="margin: 0; color: #a7f3d0;">🎉 ¡Letra compuesta con éxito! Lista para cantar sobre la pista</h4>
+<h4 style="margin: 0; color: #a7f3d0;">🎉 ¡Letra compuesta con éxito! Rima musical adaptada en Español e Inglés</h4>
 </div>""", unsafe_allow_html=True)
 
-        tab_t_es, tab_t_en = st.tabs(["🇪🇸 Letra en Español", "🇺🇸 Letra en Inglés"])
+        tab_t_es, tab_t_en = st.tabs(["🇪🇸 Versión en Español (Lírica Ritmada)", "🇺🇸 English Version (Rhymed Trans-adaptation)"])
         with tab_t_es:
             boton_copiar(st.session_state.letra_trans_es, id_btn="cp_t_es")
             st.text_area("Español (Párrafos limpios)", value=st.session_state.letra_trans_es, height=350)
         with tab_t_en:
             boton_copiar(st.session_state.letra_trans_en, id_btn="cp_t_en")
-            st.text_area("Inglés (Clean Stanzas)", value=st.session_state.letra_trans_en, height=350)
+            st.text_area("Inglés (Poetic & Rhymed)", value=st.session_state.letra_trans_en, height=350)

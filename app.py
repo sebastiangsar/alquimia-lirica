@@ -12,7 +12,7 @@ st.caption("Estructura musical, resonancia viral de Hawkins y transmutación lí
 # Memoria de sesión limpia y persistente
 claves_estado = [
     "letra_esc_orig", "letra_esc_es", "analisis_hawkins", 
-    "letra_trans_en", "letra_trans_es", "groq_chat_model"
+    "letra_trans_en", "letra_trans_es"
 ]
 for k in claves_estado:
     if k not in st.session_state:
@@ -171,16 +171,15 @@ HAWKINS_SCALE = {
         "viralidad": "78%",
         "tipo_viral": "Música contemplativa, silencio sonoro, trance pacífico.",
         "color": "#059669",
-        "temas_baja": ["El silencio después de la catástrofe", "Aislarse del ruido del mundo", "La calma de la rendición"],
+        "temas_baja": ["El silencio después de la catástfe", "Aislarse del ruido del mundo", "La calma de la rendición"],
         "temas_alta": ["El océano de paz dentro del pecho", "Ser uno con el latido cósmico", "La luz infinita que nunca se apaga"]
     }
 }
 
 # ==============================================================
-# MOTOR GROQ CON FALLBACK AUTOMÁTICO (CONTRA ERRORES 404)
+# MOTOR GROQ CON FALLBACK AUTOMÁTICO (ROBUSTO)
 # ==============================================================
 def llamar_groq_seguro(client, mensajes, temperature=0.3):
-    """Prueba dinámicamente los modelos activos de tu cuenta de Groq sin dar nunca error 404"""
     candidatos = []
     try:
         modelos_api = [m.id for m in client.models.list().data]
@@ -220,6 +219,11 @@ with st.sidebar:
     if not GROQ_API_KEY:
         GROQ_API_KEY = st.text_input("Groq API Key:", type="password", placeholder="gsk_...")
     st.caption("Obtén tu clave gratis en console.groq.com")
+    
+    if st.button("Limpiar todo"):
+        for k in claves_estado:
+            st.session_state[k] = None
+        st.rerun()
 
 def boton_copiar(texto, id_btn="copiar"):
     if not texto:
@@ -340,12 +344,12 @@ Entrega primero la versión en ESPAÑOL, luego exactamente la línea de separaci
         return contenido.strip(), contenido.strip()
 
 # ==============================================================
-# INTERFAZ DE ALQUIMIA LÍRICA (ULTRA RÁPIDA)
+# FASE 1: ENTRADA LIMPIA (SIN NADA DE INFORMACIÓN PREVIA)
 # ==============================================================
 letra_manual = st.text_area(
     "Pega aquí la letra de la canción:",
-    height=180,
-    placeholder="Pega aquí los versos o el texto de la canción..."
+    height=160,
+    placeholder="Pega aquí los versos de la canción que quieres analizar..."
 )
 
 # 1. BOTÓN: ESCANEAR
@@ -355,16 +359,22 @@ if st.button("Escanear", type="primary", key="btn_escanear"):
     elif not letra_manual.strip():
         st.warning("Pega la letra de la canción antes de escanear.")
     else:
-        with st.spinner("Estructurando bloques en párrafos limpios..."):
+        with st.spinner("Estructurando bloques musicales..."):
             try:
                 orig, es = estructurar_letra_musical(letra_manual.strip(), GROQ_API_KEY)
                 st.session_state.letra_esc_orig = orig
                 st.session_state.letra_esc_es = es
+                st.session_state.analisis_hawkins = None
+                st.session_state.letra_trans_en = None
+                st.session_state.letra_trans_es = None
             except Exception as e:
                 st.error(f"Error al estructurar: {e}")
 
-# Muestra letra escaneada
+# ==============================================================
+# FASE 2: SOLO APARECE DESPUÉS DE HABER ESCANEADO
+# ==============================================================
 if st.session_state.letra_esc_orig:
+    st.markdown("---")
     st.markdown("#### 🎼 Letra Estructurada")
     tab_l_orig, tab_l_es = st.tabs(["🌐 Original", "🇪🇸 Traducción al Español"])
     with tab_l_orig:
@@ -376,7 +386,7 @@ if st.session_state.letra_esc_orig:
 
     # 2. BOTÓN: CALIBRAR
     if st.button("Calibrar", key="btn_calibrar"):
-        with st.spinner("Midiendo frecuencia..."):
+        with st.spinner("Midiendo frecuencia de la canción..."):
             try:
                 st.session_state.analisis_hawkins = calibrar_hawkins_estructurado(
                     st.session_state.letra_esc_orig, GROQ_API_KEY
@@ -388,38 +398,38 @@ if st.session_state.letra_esc_orig:
         h = st.session_state.analisis_hawkins
         st.info(f"📊 **Frecuencia Detectada:** {h.get('frecuencia')} | **Elevación:** {h.get('elevacion')} | **Clave:** {h.get('clave')}")
 
-# ==============================================================
-# SLIDER HAWKINS + VIRALIDAD + TEMAS BAJOS Y ALTOS (SIN ERRORES HTML)
-# ==============================================================
-st.markdown("---")
-st.markdown("### 🎚️ Escala de Vibración & Conexión Viral (Hawkins)")
-st.caption("Desliza para explorar la resonancia viral y los temas en cada nivel:")
+    # ==============================================================
+    # SLIDER HAWKINS + VIRALIDAD + TEMAS (AHORA SÍ ACTIVO)
+    # ==============================================================
+    st.markdown("---")
+    st.markdown("### 🎚️ Escala de Vibración & Conexión Viral (Hawkins)")
+    st.caption("Desliza para elegir la frecuencia destino y descubrir los temas de alta o baja vibración:")
 
-frec_seleccionada = st.select_slider(
-    "Nivel de Frecuencia Hawkins:",
-    options=list(HAWKINS_SCALE.keys()),
-    value=500,
-    format_func=lambda x: HAWKINS_SCALE[x]["nombre"]
-)
+    frec_seleccionada = st.select_slider(
+        "Nivel de Frecuencia Hawkins:",
+        options=list(HAWKINS_SCALE.keys()),
+        value=500,
+        format_func=lambda x: HAWKINS_SCALE[x]["nombre"]
+    )
 
-info_frec = HAWKINS_SCALE[frec_seleccionada]
+    info_frec = HAWKINS_SCALE[frec_seleccionada]
 
-# Encabezado visual de la frecuencia
-st.markdown(
-    f"""<div style="background-color: #0b1120; border-left: 6px solid {info_frec['color']}; padding: 14px 18px; border-radius: 8px; margin-bottom: 12px;">
+    # Encabezado visual de la frecuencia
+    st.markdown(
+        f"""<div style="background-color: #0b1120; border-left: 6px solid {info_frec['color']}; padding: 14px 18px; border-radius: 8px; margin-bottom: 12px;">
 <h3 style="margin: 0; color: #ffffff;">{info_frec['nombre']} <span style="background-color: {info_frec['color']}; color: white; padding: 2px 10px; border-radius: 12px; font-size: 13px; margin-left: 8px;">🔥 Viralidad: {info_frec['viralidad']}</span></h3>
 <p style="margin: 6px 0 2px 0; color: #cbd5e1; font-size: 14px;"><b>Campo Emocional:</b> {info_frec['emocion']}</p>
 <p style="margin: 0; color: #38bdf8; font-size: 13px;"><b>Psicología de Conexión:</b> {info_frec['tipo_viral']}</p>
 </div>""",
-    unsafe_allow_html=True
-)
+        unsafe_allow_html=True
+    )
 
-# Dos columnas nativas de Streamlit (100% limpias, sin errores de código)
-col_baja, col_alta = st.columns(2)
+    # Dos columnas limpias
+    col_baja, col_alta = st.columns(2)
 
-with col_baja:
-    st.markdown(
-        f"""<div style="background-color: rgba(220, 38, 38, 0.12); border: 1px solid rgba(220, 38, 38, 0.4); padding: 12px; border-radius: 8px; min-height: 140px;">
+    with col_baja:
+        st.markdown(
+            f"""<div style="background-color: rgba(220, 38, 38, 0.12); border: 1px solid rgba(220, 38, 38, 0.4); padding: 12px; border-radius: 8px; min-height: 140px;">
 <b style="color: #f87171; font-size: 14px;">🔥 3 Temas de Baja Vibración (Catarsis):</b>
 <ul style="margin: 8px 0 0 0; padding-left: 18px; color: #fecaca; font-size: 13px;">
 <li>{info_frec['temas_baja'][0]}</li>
@@ -427,12 +437,12 @@ with col_baja:
 <li>{info_frec['temas_baja'][2]}</li>
 </ul>
 </div>""",
-        unsafe_allow_html=True
-    )
+            unsafe_allow_html=True
+        )
 
-with col_alta:
-    st.markdown(
-        f"""<div style="background-color: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.4); padding: 12px; border-radius: 8px; min-height: 140px;">
+    with col_alta:
+        st.markdown(
+            f"""<div style="background-color: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.4); padding: 12px; border-radius: 8px; min-height: 140px;">
 <b style="color: #34d399; font-size: 14px;">✨ 3 Temas de Alta Vibración (Elevación):</b>
 <ul style="margin: 8px 0 0 0; padding-left: 18px; color: #a7f3d0; font-size: 13px;">
 <li>{info_frec['temas_alta'][0]}</li>
@@ -440,55 +450,50 @@ with col_alta:
 <li>{info_frec['temas_alta'][2]}</li>
 </ul>
 </div>""",
-        unsafe_allow_html=True
-    )
+            unsafe_allow_html=True
+        )
 
-# ==============================================================
-# CONFIGURACIÓN Y TRANSMUTACIÓN DIRECTA
-# ==============================================================
-st.markdown("---")
-st.markdown("### ✨ Configurar y Componer Letra")
+    # ==============================================================
+    # CONFIGURACIÓN Y TRANSMUTACIÓN DIRECTA
+    # ==============================================================
+    st.markdown("---")
+    st.markdown("### ✨ Configurar y Componer Letra")
 
-col_rima, col_modo = st.columns([1, 1])
+    col_rima, col_modo = st.columns([1, 1])
 
-with col_rima:
-    tipo_rima_elegida = st.selectbox(
-        "Estructura de Rima:",
-        options=["AABB (Pareado clásico)", "ABAB (Alterna pop)", "AAAA (Monorrima contundente)", "ABCB (Balada tradicional)"],
-        index=1
-    )
+    with col_rima:
+        tipo_rima_elegida = st.selectbox(
+            "Estructura de Rima:",
+            options=["AABB (Pareado clásico)", "ABAB (Alterna pop)", "AAAA (Monorrima contundente)", "ABCB (Balada tradicional)"],
+            index=1
+        )
 
-with col_modo:
-    modo_elegido = st.radio(
-        "Enfoque de Composición:",
-        options=[
-            "Elevar la misma historia original",
-            "Elegir tema de Baja Vibración (Catarsis)",
-            "Elegir tema de Alta Vibración (Elevación)",
-            "Tema libre personalizado"
-        ],
-        index=0
-    )
+    with col_modo:
+        modo_elegido = st.radio(
+            "Enfoque de Composición:",
+            options=[
+                "Elevar la misma historia original",
+                "Elegir tema de Baja Vibración (Catarsis)",
+                "Elegir tema de Alta Vibración (Elevación)",
+                "Tema libre personalizado"
+            ],
+            index=0
+        )
 
-tema_para_enviar = ""
-if modo_elegido == "Elegir tema de Baja Vibración (Catarsis)":
-    tema_para_enviar = st.selectbox("Selecciona el tema de baja vibración:", options=info_frec['temas_baja'])
-elif modo_elegido == "Elegir tema de Alta Vibración (Elevación)":
-    tema_para_enviar = st.selectbox("Selecciona el tema de alta vibración:", options=info_frec['temas_alta'])
-elif modo_elegido == "Tema libre personalizado":
-    tema_para_enviar = st.text_input("Escribe tu temática:", placeholder="Ej: Triunfo personal, Paz mental, Un amor sano...")
+    tema_para_enviar = ""
+    if modo_elegido == "Elegir tema de Baja Vibración (Catarsis)":
+        tema_para_enviar = st.selectbox("Selecciona el tema de baja vibración:", options=info_frec['temas_baja'])
+    elif modo_elegido == "Elegir tema de Alta Vibración (Elevación)":
+        tema_para_enviar = st.selectbox("Selecciona el tema de alta vibración:", options=info_frec['temas_alta'])
+    elif modo_elegido == "Tema libre personalizado":
+        tema_para_enviar = st.text_input("Escribe tu temática:", placeholder="Ej: Triunfo personal, Paz mental, Un amor sano...")
 
-st.markdown(" ")
+    st.markdown(" ")
 
-# 3. BOTÓN: TRANSMUTAR
-if st.button("Transmutar", type="primary", key="btn_transmutar"):
-    if not GROQ_API_KEY.strip():
-        st.error("Por favor ingresa tu Groq API Key en la barra lateral.")
-    else:
-        letra_base = st.session_state.letra_esc_orig or letra_manual.strip()
-        
-        if not letra_base:
-            st.warning("Por favor pega la letra de la canción arriba en el recuadro antes de transmutar.")
+    # 3. BOTÓN: TRANSMUTAR
+    if st.button("Transmutar", type="primary", key="btn_transmutar"):
+        if not GROQ_API_KEY.strip():
+            st.error("Por favor ingresa tu Groq API Key en la barra lateral.")
         elif modo_elegido == "Tema libre personalizado" and not tema_para_enviar.strip():
             st.warning("Por favor escribe la temática que deseas.")
         else:
@@ -497,7 +502,7 @@ if st.button("Transmutar", type="primary", key="btn_transmutar"):
             with st.spinner("Componiendo letra rítmica en párrafos limpios (Español e Inglés)..."):
                 try:
                     es_txt, en_txt = transmutar_letra_directa(
-                        letra_base=letra_base,
+                        letra_base=st.session_state.letra_esc_orig,
                         frec_num=frec_seleccionada,
                         rima_tipo=tipo_rima_elegida,
                         modo=modo_codigo,
@@ -509,17 +514,17 @@ if st.button("Transmutar", type="primary", key="btn_transmutar"):
                 except Exception as e:
                     st.error(f"Error de conexión con Groq: {e}")
 
-# CUADRO QUE SE ABRE INMEDIATAMENTE DEBAJO DEL BOTÓN
-if st.session_state.letra_trans_es:
-    st.markdown("---")
-    st.markdown("""<div style="background-color: #064e3b; border-left: 6px solid #10b981; padding: 14px 20px; border-radius: 8px; margin: 15px 0;">
+    # CUADRO QUE SE ABRE INMEDIATAMENTE DEBAJO DEL BOTÓN
+    if st.session_state.letra_trans_es:
+        st.markdown("---")
+        st.markdown("""<div style="background-color: #064e3b; border-left: 6px solid #10b981; padding: 14px 20px; border-radius: 8px; margin: 15px 0;">
 <h4 style="margin: 0; color: #a7f3d0;">🎉 ¡Letra compuesta con éxito! Lista para cantar sobre la pista</h4>
 </div>""", unsafe_allow_html=True)
 
-    tab_t_es, tab_t_en = st.tabs(["🇪🇸 Letra en Español", "🇺🇸 Letra en Inglés"])
-    with tab_t_es:
-        boton_copiar(st.session_state.letra_trans_es, id_btn="cp_t_es")
-        st.text_area("Español (Párrafos limpios)", value=st.session_state.letra_trans_es, height=350)
-    with tab_t_en:
-        boton_copiar(st.session_state.letra_trans_en, id_btn="cp_t_en")
-        st.text_area("Inglés (Clean Stanzas)", value=st.session_state.letra_trans_en, height=350)
+        tab_t_es, tab_t_en = st.tabs(["🇪🇸 Letra en Español", "🇺🇸 Letra en Inglés"])
+        with tab_t_es:
+            boton_copiar(st.session_state.letra_trans_es, id_btn="cp_t_es")
+            st.text_area("Español (Párrafos limpios)", value=st.session_state.letra_trans_es, height=350)
+        with tab_t_en:
+            boton_copiar(st.session_state.letra_trans_en, id_btn="cp_t_en")
+            st.text_area("Inglés (Clean Stanzas)", value=st.session_state.letra_trans_en, height=350)

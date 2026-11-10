@@ -12,7 +12,7 @@ st.caption("Estructura musical, resonancia viral de Hawkins y transmutación lí
 # Memoria de sesión limpia y persistente
 claves_estado = [
     "letra_esc_orig", "letra_esc_es", "analisis_hawkins", 
-    "letra_trans_en", "letra_trans_es"
+    "letra_trans_en", "letra_trans_es", "groq_chat_model"
 ]
 for k in claves_estado:
     if k not in st.session_state:
@@ -389,7 +389,7 @@ if st.session_state.letra_esc_orig:
         st.info(f"📊 **Frecuencia Detectada:** {h.get('frecuencia')} | **Elevación:** {h.get('elevacion')} | **Clave:** {h.get('clave')}")
 
 # ==============================================================
-# SLIDER HAWKINS + VIRALIDAD + TEMAS BAJOS Y ALTOS
+# SLIDER HAWKINS + VIRALIDAD + TEMAS BAJOS Y ALTOS (SIN ERRORES HTML)
 # ==============================================================
 st.markdown("---")
 st.markdown("### 🎚️ Escala de Vibración & Conexión Viral (Hawkins)")
@@ -404,116 +404,6 @@ frec_seleccionada = st.select_slider(
 
 info_frec = HAWKINS_SCALE[frec_seleccionada]
 
-# Tarjeta de Viralidad y Temas
-st.markdown(f"""
-<div style="background: linear-gradient(135deg, #090d16 0%, #111827 100%); border-left: 6px solid {info_frec['color']}; padding: 18px 22px; border-radius: 12px; margin: 15px 0;">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h3 style="margin: 0; color: #ffffff;">{info_frec['nombre']}</h3>
-        <span style="background-color: {info_frec['color']}; color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 14px;">🔥 Viralidad: {info_frec['viralidad']}</span>
-    </div>
-    <p style="margin: 8px 0 4px 0; color: #94a3b8; font-size: 14px;"><b>Campo Emocional:</b> <span style="color: #f1f5f9;">{info_frec['emocion']}</span></p>
-    <p style="margin: 4px 0 12px 0; color: #94a3b8; font-size: 14px;"><b>Psicología de Conexión:</b> <span style="color: #38bdf8;">{info_frec['tipo_viral']}</span></p>
-    
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px;">
-        <div style="background-color: rgba(220, 38, 38, 0.12); border: 1px solid rgba(220, 38, 38, 0.3); padding: 10px; border-radius: 8px;">
-            <span style="color: #f87171; font-weight: bold; font-size: 13px;">🔥 3 Temas de Baja Vibración (Catarsis / Despecho):</span>
-            <ul style="margin: 6px 0 0 0; padding-left: 18px; color: #fecaca; font-size: 12px;">
-                <li>{info_frec['temas_baja'][0]}</li>
-                <li>{info_frec['temas_baja'][1]}</li>
-                <li>{info_frec['temas_baja'][2]}</li>
-            </ul>
-        </div>
-        <div style="background-color: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); padding: 10px; border-radius: 8px;">
-            <span style="color: #34d399; font-weight: bold; font-size: 13px;">✨ 3 Temas de Alta Vibración (Elevación / Poder):</span>
-            <ul style="margin: 6px 0 0 0; padding-left: 18px; color: #a7f3d0; font-size: 12px;">
-                <li>{info_frec['temas_alta'][0]}</li>
-                <li>{info_frec['temas_alta'][1]}</li>
-                <li>{info_frec['temas_alta'][2]}</li>
-            </ul>
-        </div>
-    </div>
-</div>
-""", unsafe_allow_html=True)
-
-# ==============================================================
-# CONFIGURACIÓN Y TRANSMUTACIÓN DIRECTA
-# ==============================================================
-st.markdown("---")
-st.markdown("### ✨ Configurar y Componer Letra")
-
-col_rima, col_modo = st.columns([1, 1])
-
-with col_rima:
-    tipo_rima_elegida = st.selectbox(
-        "Estructura de Rima:",
-        options=["AABB (Pareado clásico)", "ABAB (Alterna pop)", "AAAA (Monorrima contundente)", "ABCB (Balada tradicional)"],
-        index=1
-    )
-
-with col_modo:
-    modo_elegido = st.radio(
-        "Enfoque de Composición:",
-        options=[
-            "Elevar la misma historia original",
-            "Elegir tema de Baja Vibración (Catarsis)",
-            "Elegir tema de Alta Vibración (Elevación)",
-            "Tema libre personalizado"
-        ],
-        index=0
-    )
-
-tema_para_enviar = ""
-if modo_elegido == "Elegir tema de Baja Vibración (Catarsis)":
-    tema_para_enviar = st.selectbox("Selecciona el tema de baja vibración:", options=info_frec['temas_baja'])
-elif modo_elegido == "Elegir tema de Alta Vibración (Elevación)":
-    tema_para_enviar = st.selectbox("Selecciona el tema de alta vibración:", options=info_frec['temas_alta'])
-elif modo_elegido == "Tema libre personalizado":
-    tema_para_enviar = st.text_input("Escribe tu temática:", placeholder="Ej: Triunfo personal, Paz mental, Un amor sano...")
-
-st.markdown(" ")
-
-# 3. BOTÓN: TRANSMUTAR
-if st.button("Transmutar", type="primary", key="btn_transmutar"):
-    if not GROQ_API_KEY.strip():
-        st.error("Por favor ingresa tu Groq API Key en la barra lateral.")
-    else:
-        letra_base = st.session_state.letra_esc_orig or letra_manual.strip()
-        
-        if not letra_base:
-            st.warning("Por favor pega la letra de la canción arriba en el recuadro antes de transmutar.")
-        elif modo_elegido == "Tema libre personalizado" and not tema_para_enviar.strip():
-            st.warning("Por favor escribe la temática que deseas.")
-        else:
-            modo_codigo = "misma" if modo_elegido == "Elevar la misma historia original" else "nuevo"
-            
-            with st.spinner("Componiendo letra rítmica en párrafos limpios (Español e Inglés)..."):
-                try:
-                    es_txt, en_txt = transmutar_letra_directa(
-                        letra_base=letra_base,
-                        frec_num=frec_seleccionada,
-                        rima_tipo=tipo_rima_elegida,
-                        modo=modo_codigo,
-                        tema=tema_para_enviar.strip(),
-                        api_key=GROQ_API_KEY
-                    )
-                    st.session_state.letra_trans_es = es_txt
-                    st.session_state.letra_trans_en = en_txt
-                except Exception as e:
-                    st.error(f"Error de conexión con Groq: {e}")
-
-# CUADRO QUE SE ABRE INMEDIATAMENTE DEBAJO DEL BOTÓN
-if st.session_state.letra_trans_es:
-    st.markdown("---")
-    st.markdown("""
-    <div style="background-color: #064e3b; border-left: 6px solid #10b981; padding: 14px 20px; border-radius: 8px; margin: 15px 0;">
-        <h4 style="margin: 0; color: #a7f3d0;">🎉 ¡Letra compuesta con éxito! Lista para cantar sobre la pista</h4>
-    </div>
-    """, unsafe_allow_html=True)
-
-    tab_t_es, tab_t_en = st.tabs(["🇪🇸 Letra en Español", "🇺🇸 Letra en Inglés"])
-    with tab_t_es:
-        boton_copiar(st.session_state.letra_trans_es, id_btn="cp_t_es")
-        st.text_area("Español (Párrafos limpios)", value=st.session_state.letra_trans_es, height=350)
-    with tab_t_en:
-        boton_copiar(st.session_state.letra_trans_en, id_btn="cp_t_en")
-        st.text_area("Inglés (Clean Stanzas)", value=st.session_state.letra_trans_en, height=350)
+# Encabezado visual de la frecuencia
+st.markdown(
+    f"""<div style="background-color: #0b1120; border-left: 6px

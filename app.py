@@ -406,4 +406,120 @@ info_frec = HAWKINS_SCALE[frec_seleccionada]
 
 # Encabezado visual de la frecuencia
 st.markdown(
-    f"""<div style="background-color: #0b1120; border-left: 6px
+    f"""<div style="background-color: #0b1120; border-left: 6px solid {info_frec['color']}; padding: 14px 18px; border-radius: 8px; margin-bottom: 12px;">
+<h3 style="margin: 0; color: #ffffff;">{info_frec['nombre']} <span style="background-color: {info_frec['color']}; color: white; padding: 2px 10px; border-radius: 12px; font-size: 13px; margin-left: 8px;">🔥 Viralidad: {info_frec['viralidad']}</span></h3>
+<p style="margin: 6px 0 2px 0; color: #cbd5e1; font-size: 14px;"><b>Campo Emocional:</b> {info_frec['emocion']}</p>
+<p style="margin: 0; color: #38bdf8; font-size: 13px;"><b>Psicología de Conexión:</b> {info_frec['tipo_viral']}</p>
+</div>""",
+    unsafe_allow_html=True
+)
+
+# Dos columnas nativas de Streamlit (100% limpias, sin errores de código)
+col_baja, col_alta = st.columns(2)
+
+with col_baja:
+    st.markdown(
+        f"""<div style="background-color: rgba(220, 38, 38, 0.12); border: 1px solid rgba(220, 38, 38, 0.4); padding: 12px; border-radius: 8px; min-height: 140px;">
+<b style="color: #f87171; font-size: 14px;">🔥 3 Temas de Baja Vibración (Catarsis):</b>
+<ul style="margin: 8px 0 0 0; padding-left: 18px; color: #fecaca; font-size: 13px;">
+<li>{info_frec['temas_baja'][0]}</li>
+<li>{info_frec['temas_baja'][1]}</li>
+<li>{info_frec['temas_baja'][2]}</li>
+</ul>
+</div>""",
+        unsafe_allow_html=True
+    )
+
+with col_alta:
+    st.markdown(
+        f"""<div style="background-color: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.4); padding: 12px; border-radius: 8px; min-height: 140px;">
+<b style="color: #34d399; font-size: 14px;">✨ 3 Temas de Alta Vibración (Elevación):</b>
+<ul style="margin: 8px 0 0 0; padding-left: 18px; color: #a7f3d0; font-size: 13px;">
+<li>{info_frec['temas_alta'][0]}</li>
+<li>{info_frec['temas_alta'][1]}</li>
+<li>{info_frec['temas_alta'][2]}</li>
+</ul>
+</div>""",
+        unsafe_allow_html=True
+    )
+
+# ==============================================================
+# CONFIGURACIÓN Y TRANSMUTACIÓN DIRECTA
+# ==============================================================
+st.markdown("---")
+st.markdown("### ✨ Configurar y Componer Letra")
+
+col_rima, col_modo = st.columns([1, 1])
+
+with col_rima:
+    tipo_rima_elegida = st.selectbox(
+        "Estructura de Rima:",
+        options=["AABB (Pareado clásico)", "ABAB (Alterna pop)", "AAAA (Monorrima contundente)", "ABCB (Balada tradicional)"],
+        index=1
+    )
+
+with col_modo:
+    modo_elegido = st.radio(
+        "Enfoque de Composición:",
+        options=[
+            "Elevar la misma historia original",
+            "Elegir tema de Baja Vibración (Catarsis)",
+            "Elegir tema de Alta Vibración (Elevación)",
+            "Tema libre personalizado"
+        ],
+        index=0
+    )
+
+tema_para_enviar = ""
+if modo_elegido == "Elegir tema de Baja Vibración (Catarsis)":
+    tema_para_enviar = st.selectbox("Selecciona el tema de baja vibración:", options=info_frec['temas_baja'])
+elif modo_elegido == "Elegir tema de Alta Vibración (Elevación)":
+    tema_para_enviar = st.selectbox("Selecciona el tema de alta vibración:", options=info_frec['temas_alta'])
+elif modo_elegido == "Tema libre personalizado":
+    tema_para_enviar = st.text_input("Escribe tu temática:", placeholder="Ej: Triunfo personal, Paz mental, Un amor sano...")
+
+st.markdown(" ")
+
+# 3. BOTÓN: TRANSMUTAR
+if st.button("Transmutar", type="primary", key="btn_transmutar"):
+    if not GROQ_API_KEY.strip():
+        st.error("Por favor ingresa tu Groq API Key en la barra lateral.")
+    else:
+        letra_base = st.session_state.letra_esc_orig or letra_manual.strip()
+        
+        if not letra_base:
+            st.warning("Por favor pega la letra de la canción arriba en el recuadro antes de transmutar.")
+        elif modo_elegido == "Tema libre personalizado" and not tema_para_enviar.strip():
+            st.warning("Por favor escribe la temática que deseas.")
+        else:
+            modo_codigo = "misma" if modo_elegido == "Elevar la misma historia original" else "nuevo"
+            
+            with st.spinner("Componiendo letra rítmica en párrafos limpios (Español e Inglés)..."):
+                try:
+                    es_txt, en_txt = transmutar_letra_directa(
+                        letra_base=letra_base,
+                        frec_num=frec_seleccionada,
+                        rima_tipo=tipo_rima_elegida,
+                        modo=modo_codigo,
+                        tema=tema_para_enviar.strip(),
+                        api_key=GROQ_API_KEY
+                    )
+                    st.session_state.letra_trans_es = es_txt
+                    st.session_state.letra_trans_en = en_txt
+                except Exception as e:
+                    st.error(f"Error de conexión con Groq: {e}")
+
+# CUADRO QUE SE ABRE INMEDIATAMENTE DEBAJO DEL BOTÓN
+if st.session_state.letra_trans_es:
+    st.markdown("---")
+    st.markdown("""<div style="background-color: #064e3b; border-left: 6px solid #10b981; padding: 14px 20px; border-radius: 8px; margin: 15px 0;">
+<h4 style="margin: 0; color: #a7f3d0;">🎉 ¡Letra compuesta con éxito! Lista para cantar sobre la pista</h4>
+</div>""", unsafe_allow_html=True)
+
+    tab_t_es, tab_t_en = st.tabs(["🇪🇸 Letra en Español", "🇺🇸 Letra en Inglés"])
+    with tab_t_es:
+        boton_copiar(st.session_state.letra_trans_es, id_btn="cp_t_es")
+        st.text_area("Español (Párrafos limpios)", value=st.session_state.letra_trans_es, height=350)
+    with tab_t_en:
+        boton_copiar(st.session_state.letra_trans_en, id_btn="cp_t_en")
+        st.text_area("Inglés (Clean Stanzas)", value=st.session_state.letra_trans_en, height=350)

@@ -7,7 +7,7 @@ from groq import Groq
 st.set_page_config(page_title="Alquimia Lírica (Hawkins)", page_icon="🎵", layout="centered")
 
 st.title("🎵 Alquimia Lírica")
-st.caption("Estructura musical, resonancia viral de Hawkins y transmutación lírica")
+st.caption("Estructura musical, resonancia viral de Hawkins y transmutación poética")
 
 # Memoria de sesión limpia y persistente
 claves_estado = [
@@ -171,15 +171,16 @@ HAWKINS_SCALE = {
         "viralidad": "78%",
         "tipo_viral": "Música contemplativa, silencio sonoro, trance pacífico.",
         "color": "#059669",
-        "temas_baja": ["El silencio después de la catástfe", "Aislarse del ruido del mundo", "La calma de la rendición"],
+        "temas_baja": ["El silencio después de la catástrofe", "Aislarse del ruido del mundo", "La calma de la rendición"],
         "temas_alta": ["El océano de paz dentro del pecho", "Ser uno con el latido cósmico", "La luz infinita que nunca se apaga"]
     }
 }
 
 # ==============================================================
-# MOTOR GROQ CON FALLBACK AUTOMÁTICO (ROBUSTO)
+# MOTOR GROQ CON ANTI-BUCLE Y REINTENTO DINÁMICO
 # ==============================================================
-def llamar_groq_seguro(client, mensajes, temperature=0.3):
+def llamar_groq_seguro(client, mensajes, temperature=0.6, anti_bucle=True):
+    """Llama a Groq evitando bucles de palabras repetidas y saltando modelos caídos"""
     candidatos = []
     try:
         modelos_api = [m.id for m in client.models.list().data]
@@ -193,25 +194,32 @@ def llamar_groq_seguro(client, mensajes, temperature=0.3):
 
     if not candidatos:
         candidatos = [
+            "llama-3.3-70b-versatile",
             "openai/gpt-oss-120b", "openai/gpt-oss-20b", 
-            "qwen/qwen3.8-27b", "llama-3.3-70b-versatile", 
-            "llama-3.1-8b-instant"
+            "qwen/qwen3.8-27b", "llama-3.1-8b-instant"
         ]
+
+    kwargs = {
+        "messages": mensajes,
+        "temperature": temperature,
+    }
+    
+    # Penalizaciones estrictas para destruir repeticiones como 'breathe, breathe...'
+    if anti_bucle:
+        kwargs["frequency_penalty"] = 0.5
+        kwargs["presence_penalty"] = 0.4
 
     ultimo_error = None
     for mod in candidatos:
         try:
-            res = client.chat.completions.create(
-                model=mod,
-                messages=mensajes,
-                temperature=temperature
-            )
+            kwargs["model"] = mod
+            res = client.chat.completions.create(**kwargs)
             return res.choices[0].message.content
         except Exception as e:
             ultimo_error = e
             continue
 
-    raise Exception(f"Error al conectar con los modelos de Groq: {ultimo_error}")
+    raise Exception(f"No se pudo conectar con los modelos de Groq: {ultimo_error}")
 
 # BARRA LATERAL
 with st.sidebar:
@@ -263,21 +271,21 @@ def boton_copiar(texto, id_btn="copiar"):
 def estructurar_letra_musical(letra_cruda, api_key):
     client = Groq(api_key=api_key)
     instruccion = (
-        "Eres un productor musical. Organiza este texto en bloques musicales con corchetes: "
-        "[Verse 1], [Pre-Chorus], [Chorus], [Verse 2], [Bridge], [Chorus], [Outro]. "
+        "Eres un productor y compositor musical de élite. Organiza este texto lírico en bloques musicales formales:\n"
+        "[Verse 1], [Pre-Chorus], [Chorus], [Verse 2], [Bridge], [Chorus], [Outro].\n"
         "Separa cada bloque con doble salto de línea (\\n\\n). Cada verso en una línea individual."
     )
     letra_orig = llamar_groq_seguro(
         client, 
         [{"role": "system", "content": instruccion}, {"role": "user", "content": letra_cruda}], 
-        temperature=0.2
+        temperature=0.3
     )
 
     instruccion_es = "Traduce al español manteniendo exactamente las etiquetas [Verso 1], [Coro], etc. y los dobles saltos de línea."
     letra_es = llamar_groq_seguro(
         client, 
         [{"role": "system", "content": instruccion_es}, {"role": "user", "content": letra_orig}], 
-        temperature=0.2
+        temperature=0.3
     )
     return letra_orig, letra_es
 
@@ -291,7 +299,7 @@ FRECUENCIA: [Emoción y puntos]
 ELEVACION: [Frecuencia opuesta sugerida]
 CLAVE: [Concepto clave de transformación]"""
 
-    contenido = llamar_groq_seguro(client, [{"role": "user", "content": prompt}], temperature=0.2)
+    contenido = llamar_groq_seguro(client, [{"role": "user", "content": prompt}], temperature=0.2, anti_bucle=False)
     lineas = contenido.split("\n")
     datos = {"frecuencia": "Culpa (30 puntos)", "elevacion": "Aceptación (350)", "clave": "Perdón y redención"}
     for l in lineas:
@@ -303,39 +311,51 @@ CLAVE: [Concepto clave de transformación]"""
             datos["clave"] = l.replace("CLAVE:", "").strip()
     return datos
 
-def transmutar_letra_directa(letra_base, frec_num, rima_tipo, modo, tema, api_key):
+def transmutar_letra_poetica_avanzada(letra_base, frec_num, rima_tipo, modo, tema, api_key):
+    """Compositor lírico con copywriting emocional, imágenes mentales y palabras simples cotidianas"""
     client = Groq(api_key=api_key)
     frec_info = HAWKINS_SCALE.get(frec_num, HAWKINS_SCALE[500])
 
     if modo == "misma":
         enfoque_prompt = (
             "ENFOQUE: REESCRIBIR LA MISMA HISTORIA EN ESTA FRECUENCIA.\n"
-            "- Mantén los mismos personajes, dolor o situación original.\n"
-            f"- Reescribe el mensaje desde la frecuencia: {frec_info['nombre']} ({frec_info['emocion']})."
+            "- Conserva la situación, la herida y los personajes del tema original.\n"
+            f"- Transmútalo hacia el estado vibracional de: {frec_info['nombre']} ({frec_info['emocion']})."
         )
     else:
         enfoque_prompt = (
-            f"ENFOQUE: CREAR CANCIÓN SOBRE ESTA TEMÁTICA: \"{tema}\".\n"
-            f"- Desarrolla esta temática vibrando en: {frec_info['nombre']} ({frec_info['emocion']})."
+            f"ENFOQUE: COMPONER CANCIÓN DESDE CERO SOBRE ESTA TEMÁTICA: \"{tema}\".\n"
+            f"- Toda la narrativa debe vibrar en el campo de: {frec_info['nombre']} ({frec_info['emocion']})."
         )
 
-    prompt = f"""Eres un letrista y compositor maestro. Tu tarea es componer la letra de la canción.
+    prompt = f"""Eres un letrista galardonado y redactor publicitario (copywriter) emocional de nivel mundial.
+Tu maestría radica en escribir letras que conmueven profundamente usando LENGUAJE SIMPLE, VISUAL Y COTIDIANO.
 
 {enfoque_prompt}
 
-REGLAS DE MÉTRICA Y RIMA:
-1. Esquema de rima obligatorio en todas las estrofas: {rima_tipo}.
-2. Estructura formal obligatoria: [Verso 1], [Pre-Coro], [Coro], [Verso 2], [Puente], [Coro Final], [Outro].
-3. Formato: Separa cada bloque musical con un salto de línea doble (\\n\\n). Cada verso en una línea limpia y cantable.
+DIRECTRICES LÍRICAS OBLIGATORIAS (COPYWRITING EMOCIONAL):
+1. PALABRAS SIMPLES Y HUMANAS: Prohibido usar palabras rebuscadas, arcaicas o de diccionario enciclopédico. Usa palabras que cualquier persona diría en una charla sincera o en la calle.
+2. CREA IMÁGENES MENTALES SENSORIALES: En lugar de hablar de conceptos abstractos, usa objetos, lugares concretos, miradas, el frío en las manos, el café en la mesa, las luces de la calle, el reloj. Haz que quien escuche "vea una película en su mente".
+3. CERO REPETICIÓN MONÓTONA: Prohibido repetir la misma palabra una y otra vez. Desarrolla una historia con ritmo, variedad y contraste emocional.
+4. ESTRUCTURA RÍTMICA: 
+   - Esquema de rima estricto en cada estrofa: {rima_tipo}.
+   - Bloques obligatorios separados por salto doble (\\n\\n):
+     [Verso 1]
+     [Pre-Coro]
+     [Coro]
+     [Verso 2]
+     [Puente]
+     [Coro Final]
+     [Outro]
 
-LETRA DE REFERENCIA:
-{letra_base}
+LETRA DE REFERENCIA ORIGINAL:
+\"\"\"{letra_base}\"\"\"
 
-ENTREGA OBLIGATORIA:
-Entrega primero la versión en ESPAÑOL, luego exactamente la línea de separación "=== DIVISION_IDIOMA ===", y después la versión en INGLÉS adaptada.
+ENTREGA FORMATEADA:
+Escribe primero la versión lírica en ESPAÑOL, luego exactamente la línea separadora "=== DIVISION_IDIOMA ===", y finalmente la adaptación lírica en INGLÉS manteniendo las imágenes mentales y la rima.
 """
 
-    contenido = llamar_groq_seguro(client, [{"role": "user", "content": prompt}], temperature=0.4)
+    contenido = llamar_groq_seguro(client, [{"role": "user", "content": prompt}], temperature=0.6, anti_bucle=True)
 
     if "=== DIVISION_IDIOMA ===" in contenido:
         partes = contenido.split("=== DIVISION_IDIOMA ===")
@@ -399,7 +419,7 @@ if st.session_state.letra_esc_orig:
         st.info(f"📊 **Frecuencia Detectada:** {h.get('frecuencia')} | **Elevación:** {h.get('elevacion')} | **Clave:** {h.get('clave')}")
 
     # ==============================================================
-    # SLIDER HAWKINS + VIRALIDAD + TEMAS (AHORA SÍ ACTIVO)
+    # SLIDER HAWKINS + VIRALIDAD + TEMAS
     # ==============================================================
     st.markdown("---")
     st.markdown("### 🎚️ Escala de Vibración & Conexión Viral (Hawkins)")
@@ -414,7 +434,6 @@ if st.session_state.letra_esc_orig:
 
     info_frec = HAWKINS_SCALE[frec_seleccionada]
 
-    # Encabezado visual de la frecuencia
     st.markdown(
         f"""<div style="background-color: #0b1120; border-left: 6px solid {info_frec['color']}; padding: 14px 18px; border-radius: 8px; margin-bottom: 12px;">
 <h3 style="margin: 0; color: #ffffff;">{info_frec['nombre']} <span style="background-color: {info_frec['color']}; color: white; padding: 2px 10px; border-radius: 12px; font-size: 13px; margin-left: 8px;">🔥 Viralidad: {info_frec['viralidad']}</span></h3>
@@ -424,7 +443,6 @@ if st.session_state.letra_esc_orig:
         unsafe_allow_html=True
     )
 
-    # Dos columnas limpias
     col_baja, col_alta = st.columns(2)
 
     with col_baja:
@@ -454,7 +472,7 @@ if st.session_state.letra_esc_orig:
         )
 
     # ==============================================================
-    # CONFIGURACIÓN Y TRANSMUTACIÓN DIRECTA
+    # CONFIGURACIÓN Y TRANSMUTACIÓN
     # ==============================================================
     st.markdown("---")
     st.markdown("### ✨ Configurar y Componer Letra")
@@ -499,9 +517,9 @@ if st.session_state.letra_esc_orig:
         else:
             modo_codigo = "misma" if modo_elegido == "Elevar la misma historia original" else "nuevo"
             
-            with st.spinner("Componiendo letra rítmica en párrafos limpios (Español e Inglés)..."):
+            with st.spinner("Componiendo con imágenes visuales y copywriting emocional (Español e Inglés)..."):
                 try:
-                    es_txt, en_txt = transmutar_letra_directa(
+                    es_txt, en_txt = transmutar_letra_poetica_avanzada(
                         letra_base=st.session_state.letra_esc_orig,
                         frec_num=frec_seleccionada,
                         rima_tipo=tipo_rima_elegida,

@@ -199,7 +199,6 @@ for key, val in ESTADOS_INICIALES.items():
     if key not in st.session_state:
         st.session_state[key] = val
 
-# Manejo de API Key (Secrets o Manual)
 api_key_default = ""
 try:
     if "GROQ_API_KEY" in st.secrets:
@@ -208,19 +207,41 @@ except Exception:
     pass
 
 # ==============================================================
-# 5. MOTOR GROQ OPTIMIZADO CON LIMPIEZA DE LLAVE
+# 5. DETECCIÓN DINÁMICA DE MODELOS DE GROQ
 # ==============================================================
 @st.cache_resource
 def get_groq_client(api_key: str):
-    # .strip() elimina espacios accidentales al copiar la clave
     return Groq(api_key=api_key.strip())
 
-def llamar_groq_robusto(client, mensajes, temperature=0.6, json_mode=False):
-    """Ejecuta llamadas con modelos de alta gama sin sobrecargar peticiones"""
-    modelos = [
-        "llama-3.3-70b-versatile",
-        "llama-3.1-8b-instant"
-    ]
+@st.cache_data(ttl=1800)
+def resolver_modelos_groq(_client):
+    """Obtiene los modelos disponibles en tiempo real para evitar errores 404"""
+    try:
+        todos = [m.id for m in _client.models.list().data]
+        chat_models = [
+            m for m in todos 
+            if not any(x in m.lower() for x in ["whisper", "guard", "audio", "orpheus", "embed", "tts", "stt", "vision"])
+        ]
+        # Modelos de máxima calidad preferentes
+        preferentes = [
+            "openai/gpt-oss-120b",
+            "openai/gpt-oss-20b",
+            "qwen/qwen3.6-27b",
+            "llama-3.3-70b-versatile",
+            "llama-3.1-8b-instant"
+        ]
+        disponibles = [p for p in preferentes if p in chat_models]
+        if disponibles:
+            return disponibles
+        elif chat_models:
+            return chat_models
+    except Exception:
+        pass
+    # Fallback predeterminado si falla el listado
+    return ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "llama-3.3-70b-versatile"]
+
+def llamar_groq_dinamico(client, mensajes, temperature=0.6, json_mode=False):
+    modelos = resolver_modelos_groq(client)
     kwargs = {
         "messages": mensajes,
         "temperature": temperature,
@@ -237,13 +258,23 @@ def llamar_groq_robusto(client, mensajes, temperature=0.6, json_mode=False):
         except Exception as e:
             ultimo_err = e
             continue
-    raise Exception(f"Falla de conexión con Groq: {ultimo_err}")
+    raise Exception(f"No fue posible conectar con los modelos disponibles: {ultimo_err}")
+
+def parsear_json_limpio(texto: str) -> dict:
+    """Evita fallos si el modelo devuelve bloques de código markdown"""
+    t = texto.strip()
+    if t.startswith("```json"):
+        t = t[7:]
+    elif t.startswith("```"):
+        t = t[3:]
+    if t.endswith("```"):
+        t = t[:-3]
+    return json.loads(t.strip())
 
 # ==============================================================
 # 6. FUNCIONES DE PROCESAMIENTO MUSICAL
 # ==============================================================
 def calibrar_hawkins_json(letra_o_idea: str, api_key: str) -> dict:
-    """Diagnóstico psicológico y de viralidad en formato JSON estructurado"""
     client = get_groq_client(api_key)
     prompt = f"""Eres un analista experto en psicología musical y en el Mapa de Conciencia de David R. Hawkins (Power vs. Force).
 Analiza el siguiente texto de canción o temática:
@@ -258,14 +289,14 @@ Responde OBLIGATORIAMENTE en un objeto JSON con estas llaves exactas:
     "clave": "Concepto central para lograr la redención o soberanía emocional"
 }}"""
 
-    res = llamar_groq_robusto(
+    res = llamar_groq_dinamico(
         client,
         [{"role": "system", "content": "Responde estrictamente en JSON válido."},
          {"role": "user", "content": prompt}],
         temperature=0.2,
         json_mode=True
     )
-    return json.loads(res)
+    return parsear_json_limpio(res)
 
 def componer_cancion_dual(
     texto_base: str,
@@ -277,7 +308,6 @@ def componer_cancion_dual(
     genero_ritmo: str,
     api_key: str
 ):
-    """Compone la letra en Español y su trans-adaptación rimada en Inglés en una sola ejecución armónica"""
     client = get_groq_client(api_key)
     frec_info = HAWKINS_SCALE.get(frecuencia_num, HAWKINS_SCALE[500])
 
@@ -345,7 +375,7 @@ Separa OBLIGATORIAMENTE las secciones con estos delimitadores exactos:
 ===PRODUCCION===
 [BPM, Escala musical, Prompt de estilo para IA musical y notas para el cantante]"""
 
-    salida_cruda = llamar_groq_robusto(
+    salida_cruda = llamar_groq_dinamico(
         client,
         [{"role": "user", "content": prompt}],
         temperature=0.6
@@ -400,6 +430,7 @@ with st.sidebar:
 
     if st.button("🗑️ Limpiar todo el taller"):
         st.cache_resource.clear()
+        st.cache_data.clear()
         for k, v in ESTADOS_INICIALES.items():
             st.session_state[k] = v
         st.rerun()
@@ -421,7 +452,6 @@ with col_top_a:
 with col_top_b:
     st.button("🎲 Sorpréndeme con una Idea", on_click=inyectar_idea_aleatoria, help="Genera un conflicto humano cotidiano y adapta la frecuencia automáticamente")
 
-# CAJÓN MULTIFUNCIÓN ÚNICO
 texto_usuario = st.text_area(
     "Pega aquí una letra existente (para analizar) O escribe tu idea / historia cotidiana:",
     value=st.session_state["texto_input"],
@@ -529,7 +559,7 @@ with col_btn_cal:
 with col_btn_comp:
     btn_componer = st.button("✨ Componer / Transmutar Canción", type="primary", use_container_width=True)
 
-# LÓGICA DE ACCIÓN 1: ANALIZAR LETRA EXISTENTE
+# LÓGICA DE ACCIÓN 1: ANALIZAR LETRA
 if btn_analizar:
     texto_a_evaluar = st.session_state["texto_input"].strip()
     if not GROQ_API_KEY:
@@ -542,10 +572,7 @@ if btn_analizar:
                 diag = calibrar_hawkins_json(texto_a_evaluar, GROQ_API_KEY)
                 st.session_state.analisis_hawkins = diag
             except Exception as e:
-                if "401" in str(e) or "invalid_api_key" in str(e):
-                    st.error("Error 401: La API Key de Groq es inválida o expiró. Verifica tu clave en console.groq.com/keys.")
-                else:
-                    st.error(f"Error al analizar la letra: {e}")
+                st.error(f"Error al analizar la letra: {e}")
 
 # LÓGICA DE ACCIÓN 2: COMPONER CANCIÓN
 if btn_componer:
@@ -571,10 +598,7 @@ if btn_componer:
                 st.session_state.letra_trans_en = en_letra
                 st.session_state.guia_produccion = guia_prod
             except Exception as e:
-                if "401" in str(e) or "invalid_api_key" in str(e):
-                    st.error("Error 401: La API Key de Groq es inválida o expiró. Verifica tu clave en console.groq.com/keys.")
-                else:
-                    st.error(f"Error en el motor de composición: {e}")
+                st.error(f"Error en el motor de composición: {e}")
 
 # ==============================================================
 # 12. MUESTRA DE RESULTADOS: DIAGNÓSTICO HAWKINS

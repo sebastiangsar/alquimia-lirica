@@ -22,12 +22,12 @@ IDEAS_COTIDIANAS = [
     ("Te perdono no porque lo merezcas, sino porque mi paz mental no es negociable.", 350),
     ("La ansiedad de ver tu nombre en 'en línea' sabiendo que ya no es a mí a quien le escribes.", 100),
     ("Fui yo quien arruinó la relación por miedo a que descubrieras quién soy de verdad.", 30),
-    ("Tiradera elegante: tu traición no me destruyó, me volvió millonario e inalcanzable.", 150),
+    ("Tiradera elegante: tu traición no me destruyó, me volvió exitoso e inalcanzable.", 150),
     ("Verte en brazos de otro y tragarme las ganas de gritar en medio de la fiesta.", 125),
     ("Toqué fondo en el piso de mi cuarto y entendí que nadie vendría a salvarme excepto yo.", 200),
     ("La culpa de haber sido quien empacó las maletas sin darte una última explicación.", 30),
     ("Un amor cotidiano y sano: bailar descalzos en la cocina mientras se calienta el café.", 500),
-    ("Borrar tu número de memoria para no llamarte borracho a las tres de la mañana.", 125),
+    ("Borrar tu número de memoria para no llamarte ebrio a las tres de la mañana.", 125),
     ("La felicidad explosiva de caminar por la calle sabiendo que por fin dejé de extrañarte.", 540),
     ("La calma absoluta de mirar la lluvia sabiendo que las heridas ya cerraron.", 600),
     ("Estar rodeado de gente en una discoteca y sentirme en el vacío más absoluto.", 50),
@@ -189,7 +189,7 @@ HAWKINS_SCALE = {
 # ==============================================================
 ESTADOS_INICIALES = {
     "texto_input": "",
-    "frec_slider": 500,
+    "slider_hawkins": 500,
     "analisis_hawkins": None,
     "letra_trans_es": None,
     "letra_trans_en": None,
@@ -199,23 +199,24 @@ for key, val in ESTADOS_INICIALES.items():
     if key not in st.session_state:
         st.session_state[key] = val
 
-# Manejo de API Key
-GROQ_API_KEY = ""
+# Manejo de API Key (Secrets o Manual)
+api_key_default = ""
 try:
     if "GROQ_API_KEY" in st.secrets:
-        GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
+        api_key_default = st.secrets["GROQ_API_KEY"]
 except Exception:
     pass
 
 # ==============================================================
-# 5. MOTOR GROQ OPTIMIZADO CON CACHÉ Y MODELOS RESILIENTES
+# 5. MOTOR GROQ OPTIMIZADO CON LIMPIEZA DE LLAVE
 # ==============================================================
 @st.cache_resource
 def get_groq_client(api_key: str):
-    return Groq(api_key=api_key)
+    # .strip() elimina espacios accidentales al copiar la clave
+    return Groq(api_key=api_key.strip())
 
 def llamar_groq_robusto(client, mensajes, temperature=0.6, json_mode=False):
-    """Ejecuta llamadas con modelos de alta gama sin sobrecargar peticiones de listado"""
+    """Ejecuta llamadas con modelos de alta gama sin sobrecargar peticiones"""
     modelos = [
         "llama-3.3-70b-versatile",
         "llama-3.1-8b-instant"
@@ -236,10 +237,10 @@ def llamar_groq_robusto(client, mensajes, temperature=0.6, json_mode=False):
         except Exception as e:
             ultimo_err = e
             continue
-    raise Exception(f"No fue posible conectar con los modelos de Groq: {ultimo_err}")
+    raise Exception(f"Falla de conexión con Groq: {ultimo_err}")
 
 # ==============================================================
-# 6. FUNCIONES DE PROCESAMIENTO
+# 6. FUNCIONES DE PROCESAMIENTO MUSICAL
 # ==============================================================
 def calibrar_hawkins_json(letra_o_idea: str, api_key: str) -> dict:
     """Diagnóstico psicológico y de viralidad en formato JSON estructurado"""
@@ -280,7 +281,6 @@ def componer_cancion_dual(
     client = get_groq_client(api_key)
     frec_info = HAWKINS_SCALE.get(frecuencia_num, HAWKINS_SCALE[500])
 
-    # Directriz de estilo
     if "Simple" in modo_estilo:
         estilo_instruccion = (
             "ESTILO LÍRICO SIMPLE (COLOQUIAL / POP URBANO DIRECTO):\n"
@@ -296,7 +296,6 @@ def componer_cancion_dual(
             "- Construye una atmósfera visual densa que erice la piel sin perder el ritmo cantable."
         )
 
-    # Directriz de estructura musical
     if "Simple" in estructura_tipo:
         estructura_instruccion = (
             "ARQUITECTURA MUSICAL SIMPLE:\n"
@@ -378,20 +377,29 @@ Separa OBLIGATORIAMENTE las secciones con estos delimitadores exactos:
 with st.sidebar:
     st.header("⚙️ Configuración")
     
-    if not GROQ_API_KEY:
-        GROQ_API_KEY = st.text_input("Groq API Key:", type="password", placeholder="gsk_...")
-        st.caption("Consigue tu clave gratuita en [console.groq.com](https://console.groq.com)")
+    groq_api_key_input = st.text_input(
+        "Groq API Key:",
+        value=api_key_default,
+        type="password",
+        placeholder="gsk_..."
+    )
+    
+    if groq_api_key_input.strip():
+        GROQ_API_KEY = groq_api_key_input.strip()
+        st.success("🟢 API Key cargada correctamente")
     else:
-        st.success("🟢 API Key detectada y lista")
+        GROQ_API_KEY = ""
+        st.warning("Pega tu clave gratis de console.groq.com")
 
     st.markdown("---")
     st.markdown("### 📘 Sobre Hawkins en la Música")
     st.caption(
-        "Las canciones por debajo de 200 puntos (Ira, Culpa, Deseo) conectan rápidamente por **catarsis colectiva** (despecho, rabia). "
+        "Las canciones por debajo de 200 puntos (Ira, Culpa, Deseo) conectan por **catarsis colectiva** (despecho, rabia). "
         "Las canciones de 200 a 600 (Coraje, Aceptación, Amor) se convierten en **himnos atemporales de sanación y empoderamiento**."
     )
 
     if st.button("🗑️ Limpiar todo el taller"):
+        st.cache_resource.clear()
         for k, v in ESTADOS_INICIALES.items():
             st.session_state[k] = v
         st.rerun()
@@ -402,11 +410,10 @@ with st.sidebar:
 st.title("🎵 Alquimia Lírica Pro")
 st.caption("Composición musical de élite, resonancia viral de Hawkins y trans-adaptación rítmica")
 
-# Botón reactivo para inyectar idea cotidiana aleatoria
 def inyectar_idea_aleatoria():
     idea_sel, frec_sel = random.choice(IDEAS_COTIDIANAS)
     st.session_state["texto_input"] = idea_sel
-    st.session_state["frec_slider"] = frec_sel
+    st.session_state["slider_hawkins"] = frec_sel
 
 col_top_a, col_top_b = st.columns([2, 1])
 with col_top_a:
@@ -418,11 +425,9 @@ with col_top_b:
 texto_usuario = st.text_area(
     "Pega aquí una letra existente (para analizar) O escribe tu idea / historia cotidiana:",
     value=st.session_state["texto_input"],
-    key="area_texto_principal",
     height=140,
-    placeholder="Ej: Descubrí que salías con alguien más y te vi en el café de la esquina... o pega una canción completa..."
+    placeholder="Ej: Descubrí que salías con alguien más y te vi en el café de la esquina... o pega los versos de una canción completa..."
 )
-# Mantener sincronizado el estado
 st.session_state["texto_input"] = texto_usuario
 
 # ==============================================================
@@ -436,7 +441,7 @@ with col_estilo:
         "Estilo Lírico:",
         options=["Simple (Cotidiano / Pop Directo)", "Descriptivo (Poético / Cinematográfico)"],
         index=0,
-        help="Simple usa palabras de todos los días. Descriptivo crea imágenes sensoriales poéticas."
+        help="Simple usa palabras coloquiales. Descriptivo crea imágenes sensoriales poéticas."
     )
 
 with col_estruct:
@@ -492,11 +497,10 @@ st.markdown("##### 🎚️ Nivel de Resonancia Hawkins")
 frec_seleccionada = st.select_slider(
     "Selecciona la emoción / vibración destino:",
     options=list(HAWKINS_SCALE.keys()),
-    value=st.session_state["frec_slider"],
+    value=st.session_state["slider_hawkins"],
     format_func=lambda x: HAWKINS_SCALE[x]["nombre"],
     key="slider_hawkins"
 )
-st.session_state["frec_slider"] = frec_seleccionada
 
 info_frec = HAWKINS_SCALE[frec_seleccionada]
 
@@ -528,8 +532,8 @@ with col_btn_comp:
 # LÓGICA DE ACCIÓN 1: ANALIZAR LETRA EXISTENTE
 if btn_analizar:
     texto_a_evaluar = st.session_state["texto_input"].strip()
-    if not GROQ_API_KEY.strip():
-        st.error("Ingresa tu Groq API Key en la barra lateral para continuar.")
+    if not GROQ_API_KEY:
+        st.error("⚠️ Falta la Groq API Key. Ingrésala en la barra lateral izquierda.")
     elif not texto_a_evaluar:
         st.warning("Escribe o pega una letra en el cajón superior para calibrarla.")
     else:
@@ -538,13 +542,16 @@ if btn_analizar:
                 diag = calibrar_hawkins_json(texto_a_evaluar, GROQ_API_KEY)
                 st.session_state.analisis_hawkins = diag
             except Exception as e:
-                st.error(f"Error al analizar la letra: {e}")
+                if "401" in str(e) or "invalid_api_key" in str(e):
+                    st.error("Error 401: La API Key de Groq es inválida o expiró. Verifica tu clave en console.groq.com/keys.")
+                else:
+                    st.error(f"Error al analizar la letra: {e}")
 
 # LÓGICA DE ACCIÓN 2: COMPONER CANCIÓN
 if btn_componer:
     texto_base = st.session_state["texto_input"].strip()
-    if not GROQ_API_KEY.strip():
-        st.error("Ingresa tu Groq API Key en la barra lateral para continuar.")
+    if not GROQ_API_KEY:
+        st.error("⚠️ Falta la Groq API Key. Ingrésala en la barra lateral izquierda.")
     elif not texto_base:
         st.warning("Escribe una idea en el cajón o haz clic en '🎲 Sorpréndeme con una Idea'.")
     else:
@@ -564,7 +571,10 @@ if btn_componer:
                 st.session_state.letra_trans_en = en_letra
                 st.session_state.guia_produccion = guia_prod
             except Exception as e:
-                st.error(f"Error en el motor de composición: {e}")
+                if "401" in str(e) or "invalid_api_key" in str(e):
+                    st.error("Error 401: La API Key de Groq es inválida o expiró. Verifica tu clave en console.groq.com/keys.")
+                else:
+                    st.error(f"Error en el motor de composición: {e}")
 
 # ==============================================================
 # 12. MUESTRA DE RESULTADOS: DIAGNÓSTICO HAWKINS

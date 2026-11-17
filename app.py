@@ -1,5 +1,6 @@
 import json
 import random
+import re
 import streamlit as st
 from groq import Groq
 
@@ -177,17 +178,15 @@ except Exception:
     pass
 
 # ==============================================================
-# 5. MOTOR GROQ OPTIMIZADO (COMPATIBILIDAD 100% GARANTIZADA)
+# 5. MOTOR GROQ OPTIMIZADO (DETECCIÓN DINÁMICA SIN CACHÉ CORRUPTA)
 # ==============================================================
-@st.cache_resource
 def get_groq_client(api_key: str):
     return Groq(api_key=api_key.strip())
 
-@st.cache_data(ttl=1800)
-def resolver_modelos_groq(_client):
-    """Consulta los modelos activos de la cuenta de Groq para evitar errores 404"""
+def resolver_modelos_groq(client):
+    """Consulta en tiempo real los modelos disponibles para tu API Key"""
     try:
-        todos = [m.id for m in _client.models.list().data]
+        todos = [m.id for m in client.models.list().data]
         chat_models = [
             m for m in todos 
             if not any(x in m.lower() for x in ["whisper", "guard", "audio", "orpheus", "embed", "tts", "stt", "vision", "safeguard"])
@@ -196,7 +195,6 @@ def resolver_modelos_groq(_client):
             "openai/gpt-oss-120b",
             "openai/gpt-oss-20b",
             "qwen/qwen3.8-27b",
-            "qwen/qwen3.6-27b",
             "llama-3.3-70b-versatile",
             "llama-3.1-8b-instant"
         ]
@@ -210,14 +208,11 @@ def resolver_modelos_groq(_client):
     return ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.8-27b"]
 
 def llamar_groq_dinamico(client, mensajes, temperature=0.6, json_mode=False):
-    """
-    Llamada limpia a Groq sin parámetros conflictivos como frequency_penalty.
-    La anti-repetición se garantiza de forma estricta desde el prompt.
-    """
     modelos = resolver_modelos_groq(client)
     kwargs = {
         "messages": mensajes,
         "temperature": temperature,
+        "max_tokens": 4096,
     }
     if json_mode:
         kwargs["response_format"] = {"type": "json_object"}
@@ -227,11 +222,11 @@ def llamar_groq_dinamico(client, mensajes, temperature=0.6, json_mode=False):
         try:
             kwargs["model"] = mod
             res = client.chat.completions.create(**kwargs)
-            return res.choices[0].message.content
+            return res.choices[0].message.content, mod
         except Exception as e:
             ultimo_err = e
             continue
-    raise Exception(f"Falla con los modelos disponibles: {ultimo_err}")
+    raise Exception(f"Falla con los modelos disponibles ({modelos}): {ultimo_err}")
 
 def parsear_json_limpio(texto: str) -> dict:
     t = texto.strip()
@@ -253,14 +248,14 @@ def transmutar_semilla_rapida(texto_base: str, frecuencia_num: int, api_key: str
     try:
         client = get_groq_client(api_key)
         frec_info = HAWKINS_SCALE.get(frecuencia_num, HAWKINS_SCALE[500])
-        prompt = f"""Reescribe esta premisa o frase para que refleje de forma visceral y auténtica la frecuencia de {frec_info['nombre']} (Emoción: {frec_info['emocion']}).
-Conserva la situación y los personajes, pero cambia la actitud y los sentimientos al nivel indicado.
+        prompt = f"""Reescribe esta premisa para reflejar de forma directa y emocional la frecuencia de {frec_info['nombre']} (Emoción: {frec_info['emocion']}).
+Conserva la situación y personajes, pero adapta la actitud y sentimiento al nivel indicado.
 Responde ÚNICAMENTE con la frase reescrita en 1 o 2 oraciones cotidianas y directas, sin comillas ni explicaciones adicionales.
 
 PREMISA BASE:
 "{texto_base}" """
 
-        res = llamar_groq_dinamico(
+        res, _ = llamar_groq_dinamico(
             client,
             [{"role": "user", "content": prompt}],
             temperature=0.4
@@ -270,7 +265,7 @@ PREMISA BASE:
         return texto_base
 
 # ==============================================================
-# 7. COMPOSICIÓN MUSICAL CON MÉTRICA DE SÍLABAS Y ANTI-EPÍFORA
+# 7. COMPOSICIÓN MUSICAL ROBUSTA CON REGEX
 # ==============================================================
 def calibrar_hawkins_json(letra_o_idea: str, api_key: str) -> dict:
     client = get_groq_client(api_key)
@@ -287,7 +282,7 @@ Responde OBLIGATORIAMENTE en un objeto JSON con estas llaves exactas:
     "clave": "Concepto central para lograr la redención o soberanía emocional"
 }}"""
 
-    res = llamar_groq_dinamico(
+    res, _ = llamar_groq_dinamico(
         client,
         [{"role": "system", "content": "Responde estrictamente en JSON válido."},
          {"role": "user", "content": prompt}],
@@ -335,12 +330,12 @@ def componer_cancion_dual(
     else:
         estructura_instruccion = (
             "ARQUITECTURA MUSICAL AVANZADA (HITMAKER POP FORMAT):\n"
-            "[Verse 1]: Establece la escena y el conflicto.\n\n"
-            "[Pre-Chorus]: Tensión creciente de 2 a 4 versos que anticipan la explosión.\n\n"
+            "[Verse 1]: Escena inicial y conflicto.\n\n"
+            "[Pre-Chorus]: Tensión creciente de 2 a 4 versos que anticipan el estallido.\n\n"
             "[Chorus]: El clímax armónico, gancho memorable y contundente.\n\n"
             "[Post-Chorus]: Gancho rítmico con palabra clave del coro repetida + arreglo vocal de 2 líneas con ad-libs entre paréntesis.\n\n"
-            "[Verse 2]: Evolución de la historia, detalles adicionales.\n\n"
-            "[Pre-Chorus]: Cohesión melódica (mismo motivo y frases clave del primer Pre-Coro para fijación radial).\n\n"
+            "[Verse 2]: Evolución lírica de la historia.\n\n"
+            "[Pre-Chorus]: Cohesión melódica (mismo motivo y frases clave del primer Pre-Coro).\n\n"
             "[Chorus]: Gancho central repetido.\n\n"
             "[Bridge]: Quiebre armónico y de tempo, máxima vulnerabilidad o revelación.\n\n"
             "[Chorus Final]: Explosión catártica con ad-libs vocales sugeridos entre paréntesis.\n\n"
@@ -361,56 +356,43 @@ Compón una canción completa con impacto radial basada en las siguientes coorde
 REGLAS DE ORO OBLIGATORIAS:
 1. CONTROL MÉTRICO DE SÍLABAS (ISOSILABISMO):
    - Cada verso (línea) DEBE tener rigurosamente entre {min_sil} y {max_sil} sílabas métricas reales (tomando en cuenta sinalefas naturales del español).
-   - Prohibido hacer versos cortos recortados (menos de {min_sil} sílabas) o versos largos hablados en prosa (más de {max_sil} sílabas).
+   - Prohibido hacer versos cortos recortados (menos de {min_sil} sílabas) o versos largos en prosa (más de {max_sil} sílabas).
    - Toda la canción debe mantener una cadencia musical simétrica que encaje perfectamente en el compás rítmico.
 
-2. PROHIBICIÓN ABSOLUTA DE RIMA IDÉNTICA O EPÍFORA (ANTI-BUCLE):
+2. PROHIBICIÓN ABSOLUTA DE RIMA IDÉNTICA O EPÍFORA:
    - Está TERMINANTEMENTE PROHIBIDO terminar dos o más versos con la misma palabra (como repetir la palabra '{frec_info['emocion'].split()[0]}' o cualquier otra al final de las líneas).
    - Cada verso DEBE terminar en una palabra diferente con rimas consonantes o asonantes ricas en español (ejemplo: canción / perdón, herida / vida, olvido / herido).
-   - El nivel de Hawkins es la ATMÓSFERA EMOCIONAL y psicológica del texto, NUNCA una muletilla para escribir al final de las líneas.
+   - La frecuencia de Hawkins es la ATMÓSFERA EMOCIONAL y psicológica del texto, NUNCA una palabra que debas escribir al final de las líneas.
 
 {estilo_instruccion}
 
 {estructura_instruccion}
 
-REQUISITOS DE SALIDA:
-1. Genera la versión completa en ESPAÑOL respetando el rango de {min_sil} a {max_sil} sílabas.
-2. Genera la ADAPTACIÓN LÍRICA AL INGLÉS (NO traducción literal; trans-adaptación cantable que rime con el esquema {rima_esquema} y conserve la métrica para cantarse sobre la misma base instrumental).
-3. Redacta una GUÍA DE PRODUCCIÓN (BPM, Tonalidad, Instrumentos clave y Prompt de estilo para Suno/Udio).
-
-Separa OBLIGATORIAMENTE las secciones con estos delimitadores exactos:
-===ESPANOL===
-[Aquí toda la letra en español]
+REQUISITOS DE FORMATO OBLIGATORIOS:
+Devuelve ÚNICAMENTE los 3 bloques separados por estos títulos exactos:
+===ESPAÑOL===
+[Aquí la letra completa en español]
 ===INGLES===
-[Aquí toda la letra adaptada en inglés]
+[Aquí la adaptación cantable al inglés con rima equivalente]
 ===PRODUCCION===
-[BPM, Escala musical, Prompt de estilo para IA musical y notas para el cantante]"""
+[BPM, Escala musical, Instrumentos y notas de interpretación]"""
 
-    salida_cruda = llamar_groq_dinamico(
+    salida_cruda, mod_usado = llamar_groq_dinamico(
         client,
         [{"role": "user", "content": prompt}],
         temperature=0.6
     )
 
-    es_txt, en_txt, prod_txt = "", "", ""
-    if "===ESPANOL===" in salida_cruda and "===INGLES===" in salida_cruda:
-        partes = salida_cruda.split("===INGLES===")
-        es_txt = partes[0].replace("===ESPANOL===", "").strip()
-        
-        resto = partes[1]
-        if "===PRODUCCION===" in resto:
-            partes_en_prod = resto.split("===PRODUCCION===")
-            en_txt = partes_en_prod[0].strip()
-            prod_txt = partes_en_prod[1].strip()
-        else:
-            en_txt = resto.strip()
-            prod_txt = f"Estilo sugerido: {genero_ritmo} | Métrica: {min_sil}-{max_sil} sílabas"
-    else:
-        es_txt = salida_cruda.strip()
-        en_txt = "Versión en inglés integrada en la generación principal."
-        prod_txt = f"Estilo: {genero_ritmo}"
+    # EXTRACCIÓN ROBUSTA MEDIANTE REGEX
+    patron_es = re.search(r'===\s*ESPA?Ñ?OL\s*===\s*(.*?)(?====\s*INGL[EÉ]S\s*===|\Z)', salida_cruda, re.DOTALL | re.IGNORECASE)
+    patron_en = re.search(r'===\s*INGL[EÉ]S\s*===\s*(.*?)(?====\s*PRODUCCI[OÓ]N\s*===|\Z)', salida_cruda, re.DOTALL | re.IGNORECASE)
+    patron_prod = re.search(r'===\s*PRODUCCI[OÓ]N\s*===\s*(.*)', salida_cruda, re.DOTALL | re.IGNORECASE)
 
-    return es_txt, en_txt, prod_txt
+    es_txt = patron_es.group(1).strip() if patron_es else salida_cruda.strip()
+    en_txt = patron_en.group(1).strip() if patron_en else "Versión en inglés integrada en la generación principal."
+    prod_txt = patron_prod.group(1).strip() if patron_prod else f"Estilo sugerido: {genero_ritmo} | Métrica: {min_sil}-{max_sil} sílabas"
+
+    return es_txt, en_txt, prod_txt, mod_usado
 
 # ==============================================================
 # 8. BARRA LATERAL (CONFIGURACIÓN & RESET)
@@ -422,80 +404,64 @@ with st.sidebar:
         "Groq API Key:",
         value=api_key_default,
         type="password",
-        placeholder="gsk_...",
-        key="groq_key_sidebar"
+        placeholder="gsk_..."
     )
     
     api_key_activa = groq_api_key_input.strip() or api_key_default
 
     if api_key_activa:
-        st.success("🟢 API Key cargada correctamente")
+        st.success("🟢 API Key activa")
     else:
         st.warning("Pega tu clave gratis de console.groq.com")
 
     st.markdown("---")
     st.markdown("### 📘 Sobre Hawkins en la Música")
     st.caption(
-        "Las canciones por debajo de 200 puntos (Ira, Culpa, Deseo) conectan por **catarsis colectiva** (despecho, rabia). "
-        "Las canciones de 200 a 600 (Coraje, Aceptación, Amor) se convierten en **himnos atemporales de sanación y empoderamiento**."
+        "Las frecuencias bajas (<200) conectan por catarsis y desahogo masivo. "
+        "Las frecuencias altas (200-600) crean himnos atemporales de redención y trascendencia."
     )
 
     if st.button("🗑️ Limpiar todo el taller"):
-        st.cache_resource.clear()
-        st.cache_data.clear()
         for k, v in ESTADOS_INICIALES.items():
             st.session_state[k] = v
         st.rerun()
 
 # ==============================================================
-# 9. CALLBACKS: TRANSMUTACIÓN EN TIEMPO REAL
-# ==============================================================
-def cb_inyectar_idea_aleatoria():
-    idea_sel, frec_sel = random.choice(IDEAS_COTIDIANAS)
-    st.session_state["historia_base"] = idea_sel
-    st.session_state["slider_hawkins"] = frec_sel
-    
-    if api_key_activa:
-        frase_mutada = transmutar_semilla_rapida(idea_sel, frec_sel, api_key_activa)
-        st.session_state["texto_input"] = frase_mutada
-    else:
-        st.session_state["texto_input"] = idea_sel
-
-def cb_cambiar_slider_hawkins():
-    frec_act = st.session_state["slider_hawkins"]
-    base = st.session_state.get("historia_base", "").strip() or st.session_state.get("texto_input", "").strip()
-    
-    if base and api_key_activa:
-        st.session_state["historia_base"] = base
-        frase_adaptada = transmutar_semilla_rapida(base, frec_act, api_key_activa)
-        st.session_state["texto_input"] = frase_adaptada
-
-def cb_editar_texto_manual():
-    st.session_state["historia_base"] = st.session_state["texto_input"]
-
-# ==============================================================
-# 10. PANEL PRINCIPAL: EL LIENZO DE COMPOSICIÓN & ANÁLISIS
+# 9. PANEL PRINCIPAL: EL LIENZO DE COMPOSICIÓN & ANÁLISIS
 # ==============================================================
 st.title("🎵 Alquimia Lírica Pro")
-st.caption("Composición musical de élite, resonancia viral de Hawkins y trans-adaptación rítmica")
+st.caption("Composición musical de élite, resonancia viral de Hawkins y métrica silábica")
 
 col_top_a, col_top_b = st.columns([2, 1])
 with col_top_a:
     st.markdown("#### ✍️ Lienzo de Creación")
 with col_top_b:
-    st.button("🎲 Sorpréndeme con una Idea", on_click=cb_inyectar_idea_aleatoria, help="Genera una historia humana y sincroniza la emoción con Hawkins")
+    if st.button("🎲 Sorpréndeme con una Idea", help="Genera una historia humana y sincroniza la emoción con Hawkins"):
+        idea_sel, frec_sel = random.choice(IDEAS_COTIDIANAS)
+        st.session_state["historia_base"] = idea_sel
+        st.session_state["slider_hawkins"] = frec_sel
+        
+        if api_key_activa:
+            with st.spinner("Creando semilla emocional..."):
+                frase_mutada = transmutar_semilla_rapida(idea_sel, frec_sel, api_key_activa)
+                st.session_state["texto_input"] = frase_mutada
+        else:
+            st.session_state["texto_input"] = idea_sel
+        st.rerun()
 
-# CAJÓN PRINCIPAL MULTIFUNCIÓN
-st.text_area(
+# CAJÓN PRINCIPAL MULTIFUNCIÓN (Sin callbacks que bloqueen el botón)
+texto_actual = st.text_area(
     "Pega aquí una letra existente (para analizar) O escribe tu idea / historia cotidiana:",
-    key="texto_input",
+    value=st.session_state["texto_input"],
     height=130,
-    on_change=cb_editar_texto_manual,
     placeholder="Ej: Empaqué mis cosas y salí sin decir nada... o pega los versos de una canción completa..."
 )
+st.session_state["texto_input"] = texto_actual
+if texto_actual.strip() and not st.session_state["historia_base"]:
+    st.session_state["historia_base"] = texto_actual.strip()
 
 # ==============================================================
-# 11. CONTROLES DE COMPOSICIÓN & CONFIGURADOR DE SÍLABAS
+# 10. CONTROLES DE COMPOSICIÓN & CONFIGURADOR DE SÍLABAS
 # ==============================================================
 st.markdown("##### 🎛️ Dirección Artística & Estructura")
 col_estilo, col_estruct, col_pov = st.columns(3)
@@ -504,16 +470,14 @@ with col_estilo:
     modo_estilo_sel = st.selectbox(
         "Estilo Lírico:",
         options=["Simple (Cotidiano / Pop Directo)", "Descriptivo (Poético / Cinematográfico)"],
-        index=0,
-        help="Simple usa palabras de la vida diaria. Descriptivo crea imaginería sensorial profunda."
+        index=0
     )
 
 with col_estruct:
     estructura_sel = st.selectbox(
         "Arquitectura Musical:",
         options=["Avanzada Hitmaker (Con Pre/Post-Coro)", "Simple (Verso - Coro - Puente)"],
-        index=0,
-        help="Avanzada crea Pre-Coro de tensión y Post-Coro con ad-libs para máxima recordación radial."
+        index=0
     )
 
 with col_pov:
@@ -526,8 +490,7 @@ with col_pov:
             "Mixto / Diálogo ('Tú y Yo' - Conversacional)",
             "Omnisciente ('Voz Universal' - Filosófico)"
         ],
-        index=0,
-        help="Define quién narra y a quién se dirige la historia."
+        index=0
     )
 
 col_silabas, col_ajustes = st.columns([1, 1])
@@ -564,19 +527,27 @@ with st.expander("🎼 Género Musical y Cadencia"):
     )
 
 # ==============================================================
-# 12. ESCALA DE VIBRACIÓN HAWKINS INTERACTIVA (MODULADOR EN VIVO)
+# 11. ESCALA DE VIBRACIÓN HAWKINS INTERACTIVA (MODULADOR EN VIVO)
 # ==============================================================
 st.markdown("---")
 st.markdown("##### 🎚️ Nivel de Resonancia Hawkins (Modulador de Emoción)")
 
 frec_seleccionada = st.select_slider(
-    "Mueve el slider para cambiar la emoción de la frase en tiempo real:",
+    "Mueve el slider para modular la emoción en tiempo real:",
     options=list(HAWKINS_SCALE.keys()),
     value=st.session_state["slider_hawkins"],
-    format_func=lambda x: HAWKINS_SCALE[x]["nombre"],
-    key="slider_hawkins",
-    on_change=cb_cambiar_slider_hawkins
+    format_func=lambda x: HAWKINS_SCALE[x]["nombre"]
 )
+
+# Sincronización limpia al mover el slider sin romper los botones
+if frec_seleccionada != st.session_state["slider_hawkins"]:
+    st.session_state["slider_hawkins"] = frec_seleccionada
+    base = st.session_state["historia_base"].strip() or st.session_state["texto_input"].strip()
+    if base and api_key_activa:
+        with st.spinner("Modulando emoción de la historia..."):
+            frase_adaptada = transmutar_semilla_rapida(base, frec_seleccionada, api_key_activa)
+            st.session_state["texto_input"] = frase_adaptada
+            st.rerun()
 
 info_frec = HAWKINS_SCALE[frec_seleccionada]
 
@@ -595,7 +566,7 @@ st.markdown(
 )
 
 # ==============================================================
-# 13. BOTONES MAESTROS DE ACCIÓN
+# 12. BOTONES MAESTROS DE ACCIÓN
 # ==============================================================
 col_btn_cal, col_btn_comp = st.columns([1, 1])
 
@@ -607,13 +578,13 @@ with col_btn_comp:
 
 # LÓGICA DE ACCIÓN 1: ANALIZAR LETRA
 if btn_analizar:
-    texto_a_evaluar = st.session_state.get("texto_input", "").strip()
+    texto_a_evaluar = st.session_state["texto_input"].strip()
     if not api_key_activa:
         st.error("⚠️ Falta la Groq API Key. Ingrésala en la barra lateral izquierda.")
     elif not texto_a_evaluar:
         st.warning("Escribe o pega una letra en el cajón superior para calibrarla.")
     else:
-        with st.spinner("Calibrando frecuencia, patrón psicológico y potencial viral..."):
+        with st.spinner("Calibrando frecuencia y potencial viral con Groq..."):
             try:
                 diag = calibrar_hawkins_json(texto_a_evaluar, api_key_activa)
                 st.session_state["analisis_hawkins"] = diag
@@ -622,7 +593,7 @@ if btn_analizar:
 
 # LÓGICA DE ACCIÓN 2: COMPONER CANCIÓN
 if btn_componer:
-    texto_base = st.session_state.get("texto_input", "").strip()
+    texto_base = st.session_state["texto_input"].strip()
     if not api_key_activa:
         st.error("⚠️ Falta la Groq API Key. Ingrésala en la barra lateral izquierda.")
     elif not texto_base:
@@ -630,7 +601,7 @@ if btn_componer:
     else:
         with st.spinner(f"Componiendo ({modo_estilo_sel}, métrica de {rango_silabas_sel[0]}-{rango_silabas_sel[1]} sílabas)..."):
             try:
-                es_letra, en_letra, guia_prod = componer_cancion_dual(
+                es_letra, en_letra, guia_prod, modelo_usado = componer_cancion_dual(
                     texto_base=texto_base,
                     frecuencia_num=frec_seleccionada,
                     modo_estilo=modo_estilo_sel,
@@ -644,11 +615,12 @@ if btn_componer:
                 st.session_state["letra_trans_es"] = es_letra
                 st.session_state["letra_trans_en"] = en_letra
                 st.session_state["guia_produccion"] = guia_prod
+                st.toast(f"¡Composición completada con éxito usando {modelo_usado}!")
             except Exception as e:
                 st.error(f"Error en el motor de composición: {e}")
 
 # ==============================================================
-# 14. MUESTRA DE RESULTADOS: DIAGNÓSTICO HAWKINS
+# 13. MUESTRA DE RESULTADOS: DIAGNÓSTICO HAWKINS
 # ==============================================================
 if st.session_state.get("analisis_hawkins"):
     diag = st.session_state["analisis_hawkins"]
@@ -665,9 +637,9 @@ if st.session_state.get("analisis_hawkins"):
     )
 
 # ==============================================================
-# 15. MUESTRA DE RESULTADOS: CANCIONES GENERADAS (DUAL TAB)
+# 14. MUESTRA DE RESULTADOS: CANCIONES GENERADAS (DUAL TAB)
 # ==============================================================
-if st.session_state.get("letra_trans_es") and st.session_state.get("letra_trans_en"):
+if st.session_state.get("letra_trans_es"):
     st.markdown("---")
     st.success(f"🎉 ¡Canción compuesta con éxito! Métrica estricta de {rango_silabas_sel[0]} a {rango_silabas_sel[1]} sílabas.")
 
@@ -683,8 +655,8 @@ if st.session_state.get("letra_trans_es") and st.session_state.get("letra_trans_
 
     with tab_en:
         st.caption("Adaptación cantable en inglés que conserva la métrica silábica y el esquema de rima:")
-        st.code(st.session_state["letra_trans_en"], language="markdown")
+        st.code(st.session_state.get("letra_trans_en", ""), language="markdown")
 
     with tab_prod:
         st.caption("Metatags y guía técnica de producción (BPM, tonalidad y notas para el vocalista):")
-        st.code(st.session_state["guia_produccion"], language="yaml")
+        st.code(st.session_state.get("guia_produccion", ""), language="yaml")

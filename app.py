@@ -159,7 +159,6 @@ ESTADOS_INICIALES = {
     "texto_input": "",
     "historia_base": "",
     "slider_hawkins": 500,
-    "groq_api_key": "",
     "analisis_hawkins": None,
     "letra_trans_es": None,
     "letra_trans_en": None,
@@ -169,16 +168,16 @@ for key, val in ESTADOS_INICIALES.items():
     if key not in st.session_state:
         st.session_state[key] = val
 
-# Cargar API key desde secrets si existe
-if not st.session_state["groq_api_key"]:
-    try:
-        if "GROQ_API_KEY" in st.secrets:
-            st.session_state["groq_api_key"] = st.secrets["GROQ_API_KEY"].strip()
-    except Exception:
-        pass
+# Clave de API por defecto desde secrets
+api_key_default = ""
+try:
+    if "GROQ_API_KEY" in st.secrets:
+        api_key_default = st.secrets["GROQ_API_KEY"].strip()
+except Exception:
+    pass
 
 # ==============================================================
-# 5. MOTOR GROQ OPTIMIZADO CON ANTI-BUCLE Y RESOLUCIÓN DINÁMICA
+# 5. MOTOR GROQ OPTIMIZADO (COMPATIBILIDAD 100% GARANTIZADA)
 # ==============================================================
 @st.cache_resource
 def get_groq_client(api_key: str):
@@ -186,16 +185,17 @@ def get_groq_client(api_key: str):
 
 @st.cache_data(ttl=1800)
 def resolver_modelos_groq(_client):
-    """Consulta los modelos activos de la cuenta para no generar error 404"""
+    """Consulta los modelos activos de la cuenta de Groq para evitar errores 404"""
     try:
         todos = [m.id for m in _client.models.list().data]
         chat_models = [
             m for m in todos 
-            if not any(x in m.lower() for x in ["whisper", "guard", "audio", "orpheus", "embed", "tts", "stt", "vision"])
+            if not any(x in m.lower() for x in ["whisper", "guard", "audio", "orpheus", "embed", "tts", "stt", "vision", "safeguard"])
         ]
         preferentes = [
             "openai/gpt-oss-120b",
             "openai/gpt-oss-20b",
+            "qwen/qwen3.8-27b",
             "qwen/qwen3.6-27b",
             "llama-3.3-70b-versatile",
             "llama-3.1-8b-instant"
@@ -207,9 +207,13 @@ def resolver_modelos_groq(_client):
             return chat_models
     except Exception:
         pass
-    return ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "llama-3.3-70b-versatile"]
+    return ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.8-27b"]
 
-def llamar_groq_dinamico(client, mensajes, temperature=0.6, json_mode=False, anti_bucle=True):
+def llamar_groq_dinamico(client, mensajes, temperature=0.6, json_mode=False):
+    """
+    Llamada limpia a Groq sin parámetros conflictivos como frequency_penalty.
+    La anti-repetición se garantiza de forma estricta desde el prompt.
+    """
     modelos = resolver_modelos_groq(client)
     kwargs = {
         "messages": mensajes,
@@ -217,11 +221,6 @@ def llamar_groq_dinamico(client, mensajes, temperature=0.6, json_mode=False, ant
     }
     if json_mode:
         kwargs["response_format"] = {"type": "json_object"}
-    
-    # Penalización estricta para erradicar repeticiones
-    if anti_bucle:
-        kwargs["frequency_penalty"] = 0.5
-        kwargs["presence_penalty"] = 0.4
 
     ultimo_err = None
     for mod in modelos:
@@ -232,7 +231,7 @@ def llamar_groq_dinamico(client, mensajes, temperature=0.6, json_mode=False, ant
         except Exception as e:
             ultimo_err = e
             continue
-    raise Exception(f"No fue posible conectar con los modelos disponibles: {ultimo_err}")
+    raise Exception(f"Falla con los modelos disponibles: {ultimo_err}")
 
 def parsear_json_limpio(texto: str) -> dict:
     t = texto.strip()
@@ -264,8 +263,7 @@ PREMISA BASE:
         res = llamar_groq_dinamico(
             client,
             [{"role": "user", "content": prompt}],
-            temperature=0.4,
-            anti_bucle=True
+            temperature=0.4
         )
         return res.strip().replace('"', '').replace('\n', ' ')
     except Exception:
@@ -294,8 +292,7 @@ Responde OBLIGATORIAMENTE en un objeto JSON con estas llaves exactas:
         [{"role": "system", "content": "Responde estrictamente en JSON válido."},
          {"role": "user", "content": prompt}],
         temperature=0.2,
-        json_mode=True,
-        anti_bucle=False
+        json_mode=True
     )
     return parsear_json_limpio(res)
 
@@ -392,8 +389,7 @@ Separa OBLIGATORIAMENTE las secciones con estos delimitadores exactos:
     salida_cruda = llamar_groq_dinamico(
         client,
         [{"role": "user", "content": prompt}],
-        temperature=0.6,
-        anti_bucle=True
+        temperature=0.6
     )
 
     es_txt, en_txt, prod_txt = "", "", ""
@@ -424,16 +420,17 @@ with st.sidebar:
     
     groq_api_key_input = st.text_input(
         "Groq API Key:",
-        value=st.session_state["groq_api_key"],
+        value=api_key_default,
         type="password",
-        placeholder="gsk_..."
+        placeholder="gsk_...",
+        key="groq_key_sidebar"
     )
     
-    if groq_api_key_input.strip():
-        st.session_state["groq_api_key"] = groq_api_key_input.strip()
+    api_key_activa = groq_api_key_input.strip() or api_key_default
+
+    if api_key_activa:
         st.success("🟢 API Key cargada correctamente")
     else:
-        st.session_state["groq_api_key"] = ""
         st.warning("Pega tu clave gratis de console.groq.com")
 
     st.markdown("---")
@@ -458,27 +455,22 @@ def cb_inyectar_idea_aleatoria():
     st.session_state["historia_base"] = idea_sel
     st.session_state["slider_hawkins"] = frec_sel
     
-    # Si hay API key, transmutamos inmediatamente la frase al nivel de la idea
-    api_k = st.session_state["groq_api_key"]
-    if api_k:
-        frase_mutada = transmutar_semilla_rapida(idea_sel, frec_sel, api_k)
+    if api_key_activa:
+        frase_mutada = transmutar_semilla_rapida(idea_sel, frec_sel, api_key_activa)
         st.session_state["texto_input"] = frase_mutada
     else:
         st.session_state["texto_input"] = idea_sel
 
 def cb_cambiar_slider_hawkins():
-    """Modula la frase del cajón según el movimiento del slider"""
     frec_act = st.session_state["slider_hawkins"]
-    base = st.session_state["historia_base"].strip() or st.session_state["texto_input"].strip()
-    api_k = st.session_state["groq_api_key"]
+    base = st.session_state.get("historia_base", "").strip() or st.session_state.get("texto_input", "").strip()
     
-    if base and api_k:
+    if base and api_key_activa:
         st.session_state["historia_base"] = base
-        frase_adaptada = transmutar_semilla_rapida(base, frec_act, api_k)
+        frase_adaptada = transmutar_semilla_rapida(base, frec_act, api_key_activa)
         st.session_state["texto_input"] = frase_adaptada
 
 def cb_editar_texto_manual():
-    """Si el usuario escribe a mano en el cajón, actualiza la historia base"""
     st.session_state["historia_base"] = st.session_state["texto_input"]
 
 # ==============================================================
@@ -538,7 +530,6 @@ with col_pov:
         help="Define quién narra y a quién se dirige la historia."
     )
 
-# CONFIGURADOR DE SÍLABAS Y AJUSTES DE PRODUCCIÓN
 col_silabas, col_ajustes = st.columns([1, 1])
 
 with col_silabas:
@@ -614,11 +605,9 @@ with col_btn_cal:
 with col_btn_comp:
     btn_componer = st.button("✨ Componer / Transmutar Canción", type="primary", use_container_width=True)
 
-api_key_activa = st.session_state["groq_api_key"]
-
 # LÓGICA DE ACCIÓN 1: ANALIZAR LETRA
 if btn_analizar:
-    texto_a_evaluar = st.session_state["texto_input"].strip()
+    texto_a_evaluar = st.session_state.get("texto_input", "").strip()
     if not api_key_activa:
         st.error("⚠️ Falta la Groq API Key. Ingrésala en la barra lateral izquierda.")
     elif not texto_a_evaluar:
@@ -627,13 +616,13 @@ if btn_analizar:
         with st.spinner("Calibrando frecuencia, patrón psicológico y potencial viral..."):
             try:
                 diag = calibrar_hawkins_json(texto_a_evaluar, api_key_activa)
-                st.session_state.analisis_hawkins = diag
+                st.session_state["analisis_hawkins"] = diag
             except Exception as e:
                 st.error(f"Error al analizar la letra: {e}")
 
 # LÓGICA DE ACCIÓN 2: COMPONER CANCIÓN
 if btn_componer:
-    texto_base = st.session_state["texto_input"].strip()
+    texto_base = st.session_state.get("texto_input", "").strip()
     if not api_key_activa:
         st.error("⚠️ Falta la Groq API Key. Ingrésala en la barra lateral izquierda.")
     elif not texto_base:
@@ -652,17 +641,17 @@ if btn_componer:
                     rango_silabas=rango_silabas_sel,
                     api_key=api_key_activa
                 )
-                st.session_state.letra_trans_es = es_letra
-                st.session_state.letra_trans_en = en_letra
-                st.session_state.guia_produccion = guia_prod
+                st.session_state["letra_trans_es"] = es_letra
+                st.session_state["letra_trans_en"] = en_letra
+                st.session_state["guia_produccion"] = guia_prod
             except Exception as e:
                 st.error(f"Error en el motor de composición: {e}")
 
 # ==============================================================
 # 14. MUESTRA DE RESULTADOS: DIAGNÓSTICO HAWKINS
 # ==============================================================
-if st.session_state.analisis_hawkins:
-    diag = st.session_state.analisis_hawkins
+if st.session_state.get("analisis_hawkins"):
+    diag = st.session_state["analisis_hawkins"]
     st.markdown("---")
     st.markdown(
         f"""<div style="background: linear-gradient(135deg, #090d16 0%, #1e1b4b 60%, #311042 100%); border-left: 6px solid #fb7185; padding: 18px 22px; border-radius: 12px; margin: 15px 0;">
@@ -678,9 +667,9 @@ if st.session_state.analisis_hawkins:
 # ==============================================================
 # 15. MUESTRA DE RESULTADOS: CANCIONES GENERADAS (DUAL TAB)
 # ==============================================================
-if st.session_state.letra_trans_es and st.session_state.letra_trans_en:
+if st.session_state.get("letra_trans_es") and st.session_state.get("letra_trans_en"):
     st.markdown("---")
-    st.success(f"🎉 ¡Canción compuesta con éxito! Métrica estricta de {rango_silabas_sel[0]} a {rango_silabas_sel[1]} sílabas sin repeticiones de muletilla.")
+    st.success(f"🎉 ¡Canción compuesta con éxito! Métrica estricta de {rango_silabas_sel[0]} a {rango_silabas_sel[1]} sílabas.")
 
     tab_es, tab_en, tab_prod = st.tabs([
         "🇪🇸 Versión en Español (Lírica Ritmada)",
@@ -690,12 +679,12 @@ if st.session_state.letra_trans_es and st.session_state.letra_trans_en:
 
     with tab_es:
         st.caption("Usa el icono en la esquina superior derecha del recuadro para copiar:")
-        st.code(st.session_state.letra_trans_es, language="markdown")
+        st.code(st.session_state["letra_trans_es"], language="markdown")
 
     with tab_en:
         st.caption("Adaptación cantable en inglés que conserva la métrica silábica y el esquema de rima:")
-        st.code(st.session_state.letra_trans_en, language="markdown")
+        st.code(st.session_state["letra_trans_en"], language="markdown")
 
     with tab_prod:
         st.caption("Metatags y guía técnica de producción (BPM, tonalidad y notas para el vocalista):")
-        st.code(st.session_state.guia_produccion, language="yaml")
+        st.code(st.session_state["guia_produccion"], language="yaml")

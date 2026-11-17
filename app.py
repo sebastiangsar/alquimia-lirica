@@ -14,7 +14,7 @@ st.set_page_config(
 )
 
 # ==============================================================
-# 2. BANCO DE IDEAS HUMANAS COTIDIANAS (SORPRÉNDEME)
+# 2. BANCO DE HISTORIAS HUMANAS COTIDIANAS (SEMILLAS ANCLA)
 # ==============================================================
 IDEAS_COTIDIANAS = [
     ("Descubrí que me mentías al revisar fotos viejas donde ya mirabas a otra persona.", 75),
@@ -43,144 +43,112 @@ HAWKINS_SCALE = {
         "emocion": "Humillación / Desprecio",
         "viralidad": "84%",
         "color": "#7f1d1d",
-        "psicologia": "Vulnerabilidad extrema, confesar lo innombrable, catarsis de lo oculto.",
-        "temas_baja": ["El error que nadie me perdona", "Esconderme de la mirada de todos", "Sintiéndome una farsa"],
-        "temas_alta": ["Digno de existir sin pedir permiso", "La humillación que forjó mi temple", "Perdonar mis caídas"]
+        "psicologia": "Vulnerabilidad extrema, confesar lo innombrable, catarsis de lo oculto."
     },
     30: {
         "nombre": "Culpa (30)",
         "emocion": "Remordimiento / Castigo",
         "viralidad": "89%",
         "color": "#991b1b",
-        "psicologia": "Baladas desgarradoras de arrepentimiento, deudas morales y perdón tardío.",
-        "temas_baja": ["Fui yo quien rompió todo", "La culpa me asfixia en la noche", "Demasiado tarde para pedir perdón"],
-        "temas_alta": ["Soltar cruces ajenas", "Comprender mi error y sanar", "De la culpa nace mi redención"]
+        "psicologia": "Baladas desgarradoras de arrepentimiento, deudas morales y perdón tardío."
     },
     50: {
         "nombre": "Apatía (50)",
         "emocion": "Desesperanza / Indiferencia",
         "viralidad": "80%",
         "color": "#9a3412",
-        "psicologia": "Nihilismo urbano, canciones 'sad', vacío existencial compartido.",
-        "temas_baja": ["Ya nada duele ni importa", "El cansancio crónico de existir", "Días grises en automático"],
-        "temas_alta": ["Una chispa en medio de la niebla", "Elegir sentir aunque arda", "Despertar del coma emocional"]
+        "psicologia": "Nihilismo urbano, canciones 'sad', vacío existencial compartido."
     },
     75: {
         "nombre": "Pena / Duelo (75)",
         "emocion": "Tristeza / Pérdida",
         "viralidad": "94%",
         "color": "#c2410c",
-        "psicologia": "Duelo universal, despedidas inevitables (Efecto Adele).",
-        "temas_baja": ["Tu lado de la cama está frío", "Extrañarte me está matando", "Nuestra foto en la pared vacía"],
-        "temas_alta": ["Honrar lo que fuimos", "Llevarte en el alma sin dolor", "Agradecer tu paso por mi vida"]
+        "psicologia": "Duelo universal, despedidas inevitables (Efecto Adele)."
     },
     100: {
         "nombre": "Miedo (100)",
         "emocion": "Ansiedad / Amenaza",
         "viralidad": "91%",
         "color": "#b45309",
-        "psicologia": "Paranoia, terror a quedarse solo, el pánico al abandono o al rechazo.",
-        "temas_baja": ["Pánico a que te vayas", "La ansiedad que me oprime el pecho", "Corriendo de mis monstruos"],
-        "temas_alta": ["Avanzar aunque me tiemblen las piernas", "La tormenta no me romperá", "Confiar en el destino"]
+        "psicologia": "Paranoia, terror al abandono, la zozobra de quedarse solo."
     },
     125: {
         "nombre": "Deseo / Apego (125)",
         "emocion": "Lujuria / Obsesión",
         "viralidad": "97%",
         "color": "#a16207",
-        "psicologia": "Amor tóxico, sensualidad insaciable, adicción a una persona (Trap / Urbano).",
-        "temas_baja": ["Obsesión carnal que me quema", "Tenerte aunque seas veneno", "Deseo que no me deja dormir"],
-        "temas_alta": ["Pasión consciente y magnética", "Atracción libre sin cadenas", "Canalizar el fuego en arte"]
+        "psicologia": "Amor tóxico, sensualidad insaciable, adicción a una persona (Trap / Urbano)."
     },
     150: {
         "nombre": "Ira / Rabia (150)",
         "emocion": "Resentimiento / Venganza",
         "viralidad": "99%",
         "color": "#dc2626",
-        "psicologia": "Tiraderas viscerales, despecho furioso, cobrar traiciones (Efecto Shakira / BZRP).",
-        "temas_baja": ["Que te duela el doble de lo que me dolió", "Ardiendo de furia por tu traición", "Tiradera sin piedad"],
-        "temas_alta": ["Mi éxito rotundo es mi respuesta", "Límites de acero inquebrantables", "Furia transmutada en disciplina"]
+        "psicologia": "Tiraderas viscerales, despecho furioso, cobrar traiciones (Efecto Shakira / BZRP)."
     },
     175: {
         "nombre": "Orgullo (175)",
         "emocion": "Superioridad / Egolatría",
         "viralidad": "95%",
         "color": "#e11d48",
-        "psicologia": "Flexing, presumir logros, 'nadie creía en mí' (Hip Hop / Corridos).",
-        "temas_baja": ["Mírame en la cima y tú abajo", "No necesito de nadie", "Soy intocable"],
-        "temas_alta": ["Orgullo noble de mis raíces", "Honrar las cicatrices ganadas", "Triunfo con humildad real"]
+        "psicologia": "Flexing, presumir logros, 'nadie creía en mí' (Hip Hop / Corridos)."
     },
     200: {
         "nombre": "Coraje (200) [Umbral]",
         "emocion": "Valentía / Determinación",
         "viralidad": "93%",
         "color": "#16a34a",
-        "psicologia": "Himnos de superación personal, levantarse tras la caída (Efecto Rocky).",
-        "temas_baja": ["Luchar acorralado contra todos", "Dejar la piel en el intento", "Gritar con la voz rota"],
-        "temas_alta": ["Me caigo diez veces, me levanto once", "El momento exacto de saltar", "Dueño de mi destino"]
+        "psicologia": "Himnos de superación personal, levantarse tras la caída (Efecto Rocky)."
     },
     250: {
         "nombre": "Neutralidad (250)",
         "emocion": "Confianza / Desapego",
         "viralidad": "82%",
         "color": "#0d9488",
-        "psicologia": "Cero drama, fluir con la vida, madurez emocional despreocupada.",
-        "temas_baja": ["Me cansé de discusiones inútiles", "Que cada quien haga su vida", "Ya no me importa qué digan"],
-        "temas_alta": ["La paz de no engancharse", "Fluyendo en el río de la vida", "Tranquilidad por sobre la razón"]
+        "psicologia": "Cero drama, fluir con la vida, madurez emocional despreocupada."
     },
     310: {
         "nombre": "Voluntad (310)",
         "emocion": "Optimismo / Enfoque",
         "viralidad": "88%",
         "color": "#0284c7",
-        "psicologia": "Mentalidad imparable, disciplina de hierro, fe en el proceso.",
-        "temas_baja": ["Forzar el cuerpo hasta el límite", "Trabajar sin descanso ni tregua", "Ganar a como dé lugar"],
-        "temas_alta": ["Construyendo un legado paso a paso", "Optimismo inquebrantable", "Amor por el camino recorrido"]
+        "psicologia": "Mentalidad imparable, disciplina de hierro, fe en el proceso."
     },
     350: {
         "nombre": "Aceptación (350)",
         "emocion": "Perdón / Trascendencia",
         "viralidad": "92%",
         "color": "#2563eb",
-        "psicologia": "Cierre de ciclos en paz, soltar rencores, reconciliación íntima.",
-        "temas_baja": ["Aceptar que esto se terminó", "Firmar la tregua con mi pasado", "Reconocer la derrota con calma"],
-        "temas_alta": ["Te perdono y me libero de ti", "Cerrar la puerta con gratitud", "Amar lo que fue y bendecir lo que viene"]
+        "psicologia": "Cierre de ciclos en paz, soltar rencores, reconciliación íntima."
     },
     400: {
         "nombre": "Razón / Sabiduría (400)",
         "emocion": "Claridad / Discernimiento",
         "viralidad": "85%",
         "color": "#4f46e5",
-        "psicologia": "Rap consciente, metáforas filosóficas, disección psicológica de las relaciones.",
-        "temas_baja": ["Diseccionando tus contradicciones", "La trampa mental de las masas", "Análisis frío del adiós"],
-        "temas_alta": ["Comprender el orden oculto", "Sabiduría destilada en rima", "Claridad mental absoluta"]
+        "psicologia": "Rap consciente, metáforas reflexivas, disección psicológica de las relaciones."
     },
     500: {
         "nombre": "Amor Incondicional (500)",
         "emocion": "Compasión / Reverencia",
         "viralidad": "96%",
         "color": "#7c3aed",
-        "psicologia": "Himnos atemporales de amor que erizan la piel (Coldplay, Bob Marley).",
-        "temas_baja": ["Amarte duele de tan inmenso", "Darlo todo sin esperar rescate", "Cuidarte en medio del caos"],
-        "temas_alta": ["Amor que no pide nada a cambio", "Sanar con solo mirarte", "Tu felicidad es mi alegría"]
+        "psicologia": "Himnos atemporales de amor que erizan la piel (Coldplay, Bob Marley)."
     },
     540: {
         "nombre": "Alegría Serena (540)",
         "emocion": "Éxtasis / Celebración",
         "viralidad": "97%",
         "color": "#c026d3",
-        "psicologia": "Euforia de vivir, fiesta contagiosa, liberación pura ('Happy', Funk).",
-        "temas_baja": ["Bailar para no llorar", "Locura de una noche eterna", "Gritar hasta que se apague la pena"],
-        "temas_alta": ["El milagro de seguir con vida", "Bailar bajo la lluvia sin motivo", "Risa que contagia el mundo"]
+        "psicologia": "Euforia de vivir, fiesta contagiosa, liberación pura ('Happy', Funk)."
     },
     600: {
         "nombre": "Paz / Unidad (600)",
         "emocion": "Serenidad / Trascendencia",
         "viralidad": "78%",
         "color": "#059669",
-        "psicologia": "Trascendencia, silencio sonoro, trance pacífico y unificación espiritual.",
-        "temas_baja": ["La quietud tras la tormenta", "Desconectado del ruido del mundo", "Rendición pacífica"],
-        "temas_alta": ["Océano de calma en el pecho", "Un latido común con el universo", "Luz que nunca se extingue"]
+        "psicologia": "Trascendencia, silencio sonoro, trance pacífico y unificación espiritual."
     }
 }
 
@@ -189,7 +157,9 @@ HAWKINS_SCALE = {
 # ==============================================================
 ESTADOS_INICIALES = {
     "texto_input": "",
+    "historia_base": "",
     "slider_hawkins": 500,
+    "groq_api_key": "",
     "analisis_hawkins": None,
     "letra_trans_es": None,
     "letra_trans_en": None,
@@ -199,15 +169,16 @@ for key, val in ESTADOS_INICIALES.items():
     if key not in st.session_state:
         st.session_state[key] = val
 
-api_key_default = ""
-try:
-    if "GROQ_API_KEY" in st.secrets:
-        api_key_default = st.secrets["GROQ_API_KEY"]
-except Exception:
-    pass
+# Cargar API key desde secrets si existe
+if not st.session_state["groq_api_key"]:
+    try:
+        if "GROQ_API_KEY" in st.secrets:
+            st.session_state["groq_api_key"] = st.secrets["GROQ_API_KEY"].strip()
+    except Exception:
+        pass
 
 # ==============================================================
-# 5. DETECCIÓN DINÁMICA DE MODELOS DE GROQ
+# 5. MOTOR GROQ OPTIMIZADO CON ANTI-BUCLE Y RESOLUCIÓN DINÁMICA
 # ==============================================================
 @st.cache_resource
 def get_groq_client(api_key: str):
@@ -215,14 +186,13 @@ def get_groq_client(api_key: str):
 
 @st.cache_data(ttl=1800)
 def resolver_modelos_groq(_client):
-    """Obtiene los modelos disponibles en tiempo real para evitar errores 404"""
+    """Consulta los modelos activos de la cuenta para no generar error 404"""
     try:
         todos = [m.id for m in _client.models.list().data]
         chat_models = [
             m for m in todos 
             if not any(x in m.lower() for x in ["whisper", "guard", "audio", "orpheus", "embed", "tts", "stt", "vision"])
         ]
-        # Modelos de máxima calidad preferentes
         preferentes = [
             "openai/gpt-oss-120b",
             "openai/gpt-oss-20b",
@@ -237,10 +207,9 @@ def resolver_modelos_groq(_client):
             return chat_models
     except Exception:
         pass
-    # Fallback predeterminado si falla el listado
     return ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "llama-3.3-70b-versatile"]
 
-def llamar_groq_dinamico(client, mensajes, temperature=0.6, json_mode=False):
+def llamar_groq_dinamico(client, mensajes, temperature=0.6, json_mode=False, anti_bucle=True):
     modelos = resolver_modelos_groq(client)
     kwargs = {
         "messages": mensajes,
@@ -248,6 +217,11 @@ def llamar_groq_dinamico(client, mensajes, temperature=0.6, json_mode=False):
     }
     if json_mode:
         kwargs["response_format"] = {"type": "json_object"}
+    
+    # Penalización estricta para erradicar repeticiones
+    if anti_bucle:
+        kwargs["frequency_penalty"] = 0.5
+        kwargs["presence_penalty"] = 0.4
 
     ultimo_err = None
     for mod in modelos:
@@ -261,7 +235,6 @@ def llamar_groq_dinamico(client, mensajes, temperature=0.6, json_mode=False):
     raise Exception(f"No fue posible conectar con los modelos disponibles: {ultimo_err}")
 
 def parsear_json_limpio(texto: str) -> dict:
-    """Evita fallos si el modelo devuelve bloques de código markdown"""
     t = texto.strip()
     if t.startswith("```json"):
         t = t[7:]
@@ -272,7 +245,34 @@ def parsear_json_limpio(texto: str) -> dict:
     return json.loads(t.strip())
 
 # ==============================================================
-# 6. FUNCIONES DE PROCESAMIENTO MUSICAL
+# 6. MODULADOR HAWKINS EN VIVO (TRANSMUTADOR DE SEMILLA)
+# ==============================================================
+def transmutar_semilla_rapida(texto_base: str, frecuencia_num: int, api_key: str) -> str:
+    """Reescribe la frase del cajón según la frecuencia de Hawkins seleccionada"""
+    if not api_key.strip() or not texto_base.strip():
+        return texto_base
+    try:
+        client = get_groq_client(api_key)
+        frec_info = HAWKINS_SCALE.get(frecuencia_num, HAWKINS_SCALE[500])
+        prompt = f"""Reescribe esta premisa o frase para que refleje de forma visceral y auténtica la frecuencia de {frec_info['nombre']} (Emoción: {frec_info['emocion']}).
+Conserva la situación y los personajes, pero cambia la actitud y los sentimientos al nivel indicado.
+Responde ÚNICAMENTE con la frase reescrita en 1 o 2 oraciones cotidianas y directas, sin comillas ni explicaciones adicionales.
+
+PREMISA BASE:
+"{texto_base}" """
+
+        res = llamar_groq_dinamico(
+            client,
+            [{"role": "user", "content": prompt}],
+            temperature=0.4,
+            anti_bucle=True
+        )
+        return res.strip().replace('"', '').replace('\n', ' ')
+    except Exception:
+        return texto_base
+
+# ==============================================================
+# 7. COMPOSICIÓN MUSICAL CON MÉTRICA DE SÍLABAS Y ANTI-EPÍFORA
 # ==============================================================
 def calibrar_hawkins_json(letra_o_idea: str, api_key: str) -> dict:
     client = get_groq_client(api_key)
@@ -294,7 +294,8 @@ Responde OBLIGATORIAMENTE en un objeto JSON con estas llaves exactas:
         [{"role": "system", "content": "Responde estrictamente en JSON válido."},
          {"role": "user", "content": prompt}],
         temperature=0.2,
-        json_mode=True
+        json_mode=True,
+        anti_bucle=False
     )
     return parsear_json_limpio(res)
 
@@ -306,17 +307,19 @@ def componer_cancion_dual(
     perspectiva_pov: str,
     rima_esquema: str,
     genero_ritmo: str,
+    rango_silabas: tuple,
     api_key: str
 ):
     client = get_groq_client(api_key)
     frec_info = HAWKINS_SCALE.get(frecuencia_num, HAWKINS_SCALE[500])
+    min_sil, max_sil = rango_silabas
 
     if "Simple" in modo_estilo:
         estilo_instruccion = (
             "ESTILO LÍRICO SIMPLE (COLOQUIAL / POP URBANO DIRECTO):\n"
-            "- Usa lenguaje común, cotidiano, de calle o de conversación real.\n"
-            "- Cero palabras pretenciosas o rebuscadas. Frases cortas, contundentes y memorables.\n"
-            "- Imágenes directas que cualquier persona comprende al primer segundo de escucha."
+            "- Usa lenguaje común, callejero, de conversación real o audio de WhatsApp.\n"
+            "- Cero palabras pretenciosas o rebuscadas. Frases contundentes y memorables.\n"
+            "- Imágenes directas que cualquier persona comprende de inmediato."
         )
     else:
         estilo_instruccion = (
@@ -356,16 +359,27 @@ Compón una canción completa con impacto radial basada en las siguientes coorde
 - FRECUENCIA DE HAWKINS OBJETIVO: {frec_info['nombre']} (Emoción: {frec_info['emocion']}).
 - GÉNERO Y CADENCIA RÍTMICA: {genero_ritmo}.
 - PERSPECTIVA NARRATIVA (POV): {perspectiva_pov}.
-- ESQUEMA DE RIMA OBLIGATORIO: {rima_esquema}.
+- ESQUEMA DE RIMA: {rima_esquema}.
+
+REGLAS DE ORO OBLIGATORIAS:
+1. CONTROL MÉTRICO DE SÍLABAS (ISOSILABISMO):
+   - Cada verso (línea) DEBE tener rigurosamente entre {min_sil} y {max_sil} sílabas métricas reales (tomando en cuenta sinalefas naturales del español).
+   - Prohibido hacer versos cortos recortados (menos de {min_sil} sílabas) o versos largos hablados en prosa (más de {max_sil} sílabas).
+   - Toda la canción debe mantener una cadencia musical simétrica que encaje perfectamente en el compás rítmico.
+
+2. PROHIBICIÓN ABSOLUTA DE RIMA IDÉNTICA O EPÍFORA (ANTI-BUCLE):
+   - Está TERMINANTEMENTE PROHIBIDO terminar dos o más versos con la misma palabra (como repetir la palabra '{frec_info['emocion'].split()[0]}' o cualquier otra al final de las líneas).
+   - Cada verso DEBE terminar en una palabra diferente con rimas consonantes o asonantes ricas en español (ejemplo: canción / perdón, herida / vida, olvido / herido).
+   - El nivel de Hawkins es la ATMÓSFERA EMOCIONAL y psicológica del texto, NUNCA una muletilla para escribir al final de las líneas.
 
 {estilo_instruccion}
 
 {estructura_instruccion}
 
 REQUISITOS DE SALIDA:
-1. Genera primero la versión completa en ESPAÑOL.
-2. Genera después la ADAPTACIÓN LÍRICA AL INGLÉS (NO traducción literal; trans-adaptación cantable que rime con el mismo esquema {rima_esquema} y conserve la métrica para cantarse sobre la misma base instrumental).
-3. Redacta una GUÍA DE PRODUCCIÓN corta para Suno/Udio/Productor (BPM, Tonalidad, Instrumentos clave y Prompt de estilo).
+1. Genera la versión completa en ESPAÑOL respetando el rango de {min_sil} a {max_sil} sílabas.
+2. Genera la ADAPTACIÓN LÍRICA AL INGLÉS (NO traducción literal; trans-adaptación cantable que rime con el esquema {rima_esquema} y conserve la métrica para cantarse sobre la misma base instrumental).
+3. Redacta una GUÍA DE PRODUCCIÓN (BPM, Tonalidad, Instrumentos clave y Prompt de estilo para Suno/Udio).
 
 Separa OBLIGATORIAMENTE las secciones con estos delimitadores exactos:
 ===ESPANOL===
@@ -378,7 +392,8 @@ Separa OBLIGATORIAMENTE las secciones con estos delimitadores exactos:
     salida_cruda = llamar_groq_dinamico(
         client,
         [{"role": "user", "content": prompt}],
-        temperature=0.6
+        temperature=0.6,
+        anti_bucle=True
     )
 
     es_txt, en_txt, prod_txt = "", "", ""
@@ -393,32 +408,32 @@ Separa OBLIGATORIAMENTE las secciones con estos delimitadores exactos:
             prod_txt = partes_en_prod[1].strip()
         else:
             en_txt = resto.strip()
-            prod_txt = f"Estilo sugerido: {genero_ritmo} | Frecuencia: {frec_info['nombre']}"
+            prod_txt = f"Estilo sugerido: {genero_ritmo} | Métrica: {min_sil}-{max_sil} sílabas"
     else:
         es_txt = salida_cruda.strip()
-        en_txt = "Generación en inglés integrada en la versión principal."
+        en_txt = "Versión en inglés integrada en la generación principal."
         prod_txt = f"Estilo: {genero_ritmo}"
 
     return es_txt, en_txt, prod_txt
 
 # ==============================================================
-# 7. BARRA LATERAL (CONFIGURACIÓN & RESET)
+# 8. BARRA LATERAL (CONFIGURACIÓN & RESET)
 # ==============================================================
 with st.sidebar:
     st.header("⚙️ Configuración")
     
     groq_api_key_input = st.text_input(
         "Groq API Key:",
-        value=api_key_default,
+        value=st.session_state["groq_api_key"],
         type="password",
         placeholder="gsk_..."
     )
     
     if groq_api_key_input.strip():
-        GROQ_API_KEY = groq_api_key_input.strip()
+        st.session_state["groq_api_key"] = groq_api_key_input.strip()
         st.success("🟢 API Key cargada correctamente")
     else:
-        GROQ_API_KEY = ""
+        st.session_state["groq_api_key"] = ""
         st.warning("Pega tu clave gratis de console.groq.com")
 
     st.markdown("---")
@@ -436,32 +451,59 @@ with st.sidebar:
         st.rerun()
 
 # ==============================================================
-# 8. PANEL PRINCIPAL: EL LIENZO DE COMPOSICIÓN & ANÁLISIS
+# 9. CALLBACKS: TRANSMUTACIÓN EN TIEMPO REAL
+# ==============================================================
+def cb_inyectar_idea_aleatoria():
+    idea_sel, frec_sel = random.choice(IDEAS_COTIDIANAS)
+    st.session_state["historia_base"] = idea_sel
+    st.session_state["slider_hawkins"] = frec_sel
+    
+    # Si hay API key, transmutamos inmediatamente la frase al nivel de la idea
+    api_k = st.session_state["groq_api_key"]
+    if api_k:
+        frase_mutada = transmutar_semilla_rapida(idea_sel, frec_sel, api_k)
+        st.session_state["texto_input"] = frase_mutada
+    else:
+        st.session_state["texto_input"] = idea_sel
+
+def cb_cambiar_slider_hawkins():
+    """Modula la frase del cajón según el movimiento del slider"""
+    frec_act = st.session_state["slider_hawkins"]
+    base = st.session_state["historia_base"].strip() or st.session_state["texto_input"].strip()
+    api_k = st.session_state["groq_api_key"]
+    
+    if base and api_k:
+        st.session_state["historia_base"] = base
+        frase_adaptada = transmutar_semilla_rapida(base, frec_act, api_k)
+        st.session_state["texto_input"] = frase_adaptada
+
+def cb_editar_texto_manual():
+    """Si el usuario escribe a mano en el cajón, actualiza la historia base"""
+    st.session_state["historia_base"] = st.session_state["texto_input"]
+
+# ==============================================================
+# 10. PANEL PRINCIPAL: EL LIENZO DE COMPOSICIÓN & ANÁLISIS
 # ==============================================================
 st.title("🎵 Alquimia Lírica Pro")
 st.caption("Composición musical de élite, resonancia viral de Hawkins y trans-adaptación rítmica")
-
-def inyectar_idea_aleatoria():
-    idea_sel, frec_sel = random.choice(IDEAS_COTIDIANAS)
-    st.session_state["texto_input"] = idea_sel
-    st.session_state["slider_hawkins"] = frec_sel
 
 col_top_a, col_top_b = st.columns([2, 1])
 with col_top_a:
     st.markdown("#### ✍️ Lienzo de Creación")
 with col_top_b:
-    st.button("🎲 Sorpréndeme con una Idea", on_click=inyectar_idea_aleatoria, help="Genera un conflicto humano cotidiano y adapta la frecuencia automáticamente")
+    st.button("🎲 Sorpréndeme con una Idea", on_click=cb_inyectar_idea_aleatoria, help="Genera una historia humana y sincroniza la emoción con Hawkins")
 
-texto_usuario = st.text_area(
+# CAJÓN PRINCIPAL MULTIFUNCIÓN
+st.text_area(
     "Pega aquí una letra existente (para analizar) O escribe tu idea / historia cotidiana:",
-    value=st.session_state["texto_input"],
-    height=140,
-    placeholder="Ej: Descubrí que salías con alguien más y te vi en el café de la esquina... o pega los versos de una canción completa..."
+    key="texto_input",
+    height=130,
+    on_change=cb_editar_texto_manual,
+    placeholder="Ej: Empaqué mis cosas y salí sin decir nada... o pega los versos de una canción completa..."
 )
-st.session_state["texto_input"] = texto_usuario
 
 # ==============================================================
-# 9. CONTROLES DE COMPOSICIÓN (EN 3 COLUMNAS LIMPIAS)
+# 11. CONTROLES DE COMPOSICIÓN & CONFIGURADOR DE SÍLABAS
 # ==============================================================
 st.markdown("##### 🎛️ Dirección Artística & Estructura")
 col_estilo, col_estruct, col_pov = st.columns(3)
@@ -471,15 +513,15 @@ with col_estilo:
         "Estilo Lírico:",
         options=["Simple (Cotidiano / Pop Directo)", "Descriptivo (Poético / Cinematográfico)"],
         index=0,
-        help="Simple usa palabras coloquiales. Descriptivo crea imágenes sensoriales poéticas."
+        help="Simple usa palabras de la vida diaria. Descriptivo crea imaginería sensorial profunda."
     )
 
 with col_estruct:
     estructura_sel = st.selectbox(
         "Arquitectura Musical:",
-        options=["Simple (Verso - Coro - Puente)", "Avanzada Hitmaker (Con Pre/Post-Coro)"],
-        index=1,
-        help="Avanzada incluye Pre-Coro de tensión y Post-Coro con ad-libs para máxima recordación."
+        options=["Avanzada Hitmaker (Con Pre/Post-Coro)", "Simple (Verso - Coro - Puente)"],
+        index=0,
+        help="Avanzada crea Pre-Coro de tensión y Post-Coro con ad-libs para máxima recordación radial."
     )
 
 with col_pov:
@@ -493,43 +535,56 @@ with col_pov:
             "Omnisciente ('Voz Universal' - Filosófico)"
         ],
         index=0,
-        help="Define quién habla y a quién se dirige la narrativa de la canción."
+        help="Define quién narra y a quién se dirige la historia."
     )
 
-with st.expander("⚙️ Ajustes Opcionales de Producción (Rima & Ritmo)"):
-    col_sub_rima, col_sub_ritmo = st.columns(2)
-    with col_sub_rima:
-        rima_sel = st.selectbox(
-            "Esquema de Rima:",
-            options=["ABAB (Alterna pop / Dinámica)", "AABB (Pareado clásico)", "ABCB (Balada tradicional)", "AAAA (Monorrima contundente)"],
-            index=0
-        )
-    with col_sub_ritmo:
-        genero_sel = st.selectbox(
-            "Género / Cadencia:",
-            options=[
-                "Pop Urbano / Reggaetón Comercial",
-                "Balada Acústica / Pop Emocional",
-                "Indie Rock / Pop Alternativo",
-                "Trap / Hip Hop Consciente",
-                "R&B Contemporáneo / Soul",
-                "Corrido Tumbado / Regional"
-            ],
-            index=0
-        )
+# CONFIGURADOR DE SÍLABAS Y AJUSTES DE PRODUCCIÓN
+col_silabas, col_ajustes = st.columns([1, 1])
+
+with col_silabas:
+    rango_silabas_sel = st.slider(
+        "📏 Métrica por verso (Rango de sílabas):",
+        min_value=5,
+        max_value=16,
+        value=(7, 12),
+        step=1,
+        help="Fuerza a cada línea a mantenerse entre este mínimo y máximo de sílabas para una cuadratura musical perfecta."
+    )
+
+with col_ajustes:
+    rima_sel = st.selectbox(
+        "Esquema de Rima:",
+        options=["ABAB (Alterna pop / Dinámica)", "AABB (Pareado clásico)", "ABCB (Balada tradicional)", "AAAA (Monorrima contundente)"],
+        index=0
+    )
+
+with st.expander("🎼 Género Musical y Cadencia"):
+    genero_sel = st.selectbox(
+        "Estilo Instrumental Sugerido:",
+        options=[
+            "Pop Urbano / Reggaetón Comercial",
+            "Balada Acústica / Pop Emocional",
+            "Indie Rock / Pop Alternativo",
+            "Trap / Hip Hop Consciente",
+            "R&B Contemporáneo / Soul",
+            "Corrido Tumbado / Regional"
+        ],
+        index=0
+    )
 
 # ==============================================================
-# 10. ESCALA DE VIBRACIÓN HAWKINS INTERACTIVA
+# 12. ESCALA DE VIBRACIÓN HAWKINS INTERACTIVA (MODULADOR EN VIVO)
 # ==============================================================
 st.markdown("---")
-st.markdown("##### 🎚️ Nivel de Resonancia Hawkins")
+st.markdown("##### 🎚️ Nivel de Resonancia Hawkins (Modulador de Emoción)")
 
 frec_seleccionada = st.select_slider(
-    "Selecciona la emoción / vibración destino:",
+    "Mueve el slider para cambiar la emoción de la frase en tiempo real:",
     options=list(HAWKINS_SCALE.keys()),
     value=st.session_state["slider_hawkins"],
     format_func=lambda x: HAWKINS_SCALE[x]["nombre"],
-    key="slider_hawkins"
+    key="slider_hawkins",
+    on_change=cb_cambiar_slider_hawkins
 )
 
 info_frec = HAWKINS_SCALE[frec_seleccionada]
@@ -549,7 +604,7 @@ st.markdown(
 )
 
 # ==============================================================
-# 11. BOTONES MAESTROS DE ACCIÓN
+# 13. BOTONES MAESTROS DE ACCIÓN
 # ==============================================================
 col_btn_cal, col_btn_comp = st.columns([1, 1])
 
@@ -559,17 +614,19 @@ with col_btn_cal:
 with col_btn_comp:
     btn_componer = st.button("✨ Componer / Transmutar Canción", type="primary", use_container_width=True)
 
+api_key_activa = st.session_state["groq_api_key"]
+
 # LÓGICA DE ACCIÓN 1: ANALIZAR LETRA
 if btn_analizar:
     texto_a_evaluar = st.session_state["texto_input"].strip()
-    if not GROQ_API_KEY:
+    if not api_key_activa:
         st.error("⚠️ Falta la Groq API Key. Ingrésala en la barra lateral izquierda.")
     elif not texto_a_evaluar:
         st.warning("Escribe o pega una letra en el cajón superior para calibrarla.")
     else:
         with st.spinner("Calibrando frecuencia, patrón psicológico y potencial viral..."):
             try:
-                diag = calibrar_hawkins_json(texto_a_evaluar, GROQ_API_KEY)
+                diag = calibrar_hawkins_json(texto_a_evaluar, api_key_activa)
                 st.session_state.analisis_hawkins = diag
             except Exception as e:
                 st.error(f"Error al analizar la letra: {e}")
@@ -577,12 +634,12 @@ if btn_analizar:
 # LÓGICA DE ACCIÓN 2: COMPONER CANCIÓN
 if btn_componer:
     texto_base = st.session_state["texto_input"].strip()
-    if not GROQ_API_KEY:
+    if not api_key_activa:
         st.error("⚠️ Falta la Groq API Key. Ingrésala en la barra lateral izquierda.")
     elif not texto_base:
         st.warning("Escribe una idea en el cajón o haz clic en '🎲 Sorpréndeme con una Idea'.")
     else:
-        with st.spinner(f"Componiendo en Español ({modo_estilo_sel}) y adaptando al Inglés con rima cantable..."):
+        with st.spinner(f"Componiendo ({modo_estilo_sel}, métrica de {rango_silabas_sel[0]}-{rango_silabas_sel[1]} sílabas)..."):
             try:
                 es_letra, en_letra, guia_prod = componer_cancion_dual(
                     texto_base=texto_base,
@@ -592,7 +649,8 @@ if btn_componer:
                     perspectiva_pov=narrativa_pov_sel,
                     rima_esquema=rima_sel,
                     genero_ritmo=genero_sel,
-                    api_key=GROQ_API_KEY
+                    rango_silabas=rango_silabas_sel,
+                    api_key=api_key_activa
                 )
                 st.session_state.letra_trans_es = es_letra
                 st.session_state.letra_trans_en = en_letra
@@ -601,7 +659,7 @@ if btn_componer:
                 st.error(f"Error en el motor de composición: {e}")
 
 # ==============================================================
-# 12. MUESTRA DE RESULTADOS: DIAGNÓSTICO HAWKINS
+# 14. MUESTRA DE RESULTADOS: DIAGNÓSTICO HAWKINS
 # ==============================================================
 if st.session_state.analisis_hawkins:
     diag = st.session_state.analisis_hawkins
@@ -618,11 +676,11 @@ if st.session_state.analisis_hawkins:
     )
 
 # ==============================================================
-# 13. MUESTRA DE RESULTADOS: CANCIONES GENERADAS (DUAL TAB)
+# 15. MUESTRA DE RESULTADOS: CANCIONES GENERADAS (DUAL TAB)
 # ==============================================================
 if st.session_state.letra_trans_es and st.session_state.letra_trans_en:
     st.markdown("---")
-    st.success("🎉 ¡Obra compuesta con éxito! Las dos versiones conservan la métrica para cantarse sobre la misma base instrumental.")
+    st.success(f"🎉 ¡Canción compuesta con éxito! Métrica estricta de {rango_silabas_sel[0]} a {rango_silabas_sel[1]} sílabas sin repeticiones de muletilla.")
 
     tab_es, tab_en, tab_prod = st.tabs([
         "🇪🇸 Versión en Español (Lírica Ritmada)",
@@ -631,13 +689,13 @@ if st.session_state.letra_trans_es and st.session_state.letra_trans_en:
     ])
 
     with tab_es:
-        st.caption("Usa el icono de la esquina superior derecha del bloque para copiar:")
+        st.caption("Usa el icono en la esquina superior derecha del recuadro para copiar:")
         st.code(st.session_state.letra_trans_es, language="markdown")
 
     with tab_en:
-        st.caption("Adaptación cantable en inglés con rima equivalente y métrica silábica:")
+        st.caption("Adaptación cantable en inglés que conserva la métrica silábica y el esquema de rima:")
         st.code(st.session_state.letra_trans_en, language="markdown")
 
     with tab_prod:
-        st.caption("Ficha técnica recomendada para vocalistas, productores o generadores de audio IA (Suno / Udio):")
+        st.caption("Metatags y guía técnica de producción (BPM, tonalidad y notas para el vocalista):")
         st.code(st.session_state.guia_produccion, language="yaml")

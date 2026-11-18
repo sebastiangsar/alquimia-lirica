@@ -169,7 +169,6 @@ for key, val in ESTADOS_INICIALES.items():
     if key not in st.session_state:
         st.session_state[key] = val
 
-# Clave de API por defecto desde secrets
 api_key_default = ""
 try:
     if "GROQ_API_KEY" in st.secrets:
@@ -178,13 +177,12 @@ except Exception:
     pass
 
 # ==============================================================
-# 5. MOTOR GROQ OPTIMIZADO (SOPORTE PARA MODELOS DE RAZONAMIENTO)
+# 5. MOTOR GROQ OPTIMIZADO
 # ==============================================================
 def get_groq_client(api_key: str):
     return Groq(api_key=api_key.strip())
 
 def resolver_modelos_groq(client):
-    """Detecta los modelos disponibles en tu cuenta"""
     try:
         todos = [m.id for m in client.models.list().data]
         chat_models = [
@@ -221,19 +219,16 @@ def llamar_groq_dinamico(client, mensajes, temperature=0.6, json_mode=False):
         if json_mode:
             kwargs["response_format"] = {"type": "json_object"}
 
-        # Si es un modelo de razonamiento (como GPT-OSS o Qwen), suprimimos el canal CoT para recibir el texto limpio
         if any(r in mod.lower() for r in ["gpt-oss", "qwen3.8"]):
             kwargs["reasoning_format"] = "hidden"
 
         try:
             res = client.chat.completions.create(**kwargs)
             msg = res.choices[0].message
-            # Extraer contenido directo o fallback a reasoning si viniera ahí
             contenido = getattr(msg, 'content', None) or getattr(msg, 'reasoning', None) or ""
             if contenido:
                 return contenido, mod
         except Exception:
-            # Si el modelo no aceptó reasoning_format, reintentar sin ese parámetro
             try:
                 kwargs.pop("reasoning_format", None)
                 res = client.chat.completions.create(**kwargs)
@@ -284,7 +279,7 @@ PREMISA BASE:
         return texto_base
 
 # ==============================================================
-# 7. COMPOSICIÓN MUSICAL ROBUSTA CON SALVAGUARDA TOTAL
+# 7. COMPOSICIÓN MUSICAL CON REGLAS DE LÍNEAS ESTRICTAS
 # ==============================================================
 def calibrar_hawkins_json(letra_o_idea: str, api_key: str) -> dict:
     client = get_groq_client(api_key)
@@ -342,23 +337,29 @@ def componer_cancion_dual(
 
     if "Simple" in estructura_tipo:
         estructura_instruccion = (
-            "ARQUITECTURA MUSICAL SIMPLE:\n"
-            "[Verse 1]\n\n[Chorus]\n\n[Verse 2]\n\n[Chorus]\n\n[Bridge]\n\n[Chorus]\n\n[Outro]\n"
+            "ARQUITECTURA MUSICAL SIMPLE (MÁXIMO 4 LÍNEAS POR SECCIÓN):\n"
+            "- [Verse 1]: Máximo 4 líneas.\n\n"
+            "- [Chorus]: Máximo 4 líneas.\n\n"
+            "- [Verse 2]: Máximo 4 líneas.\n\n"
+            "- [Chorus]: Mismo coro de máximo 4 líneas.\n\n"
+            "- [Bridge]: Máximo 4 líneas.\n\n"
+            "- [Chorus]: Coro final de máximo 4 líneas.\n\n"
+            "- [Outro]: De 2 a 4 líneas de cierre.\n"
             "(Separa rigurosamente cada bloque con doble salto de línea)."
         )
     else:
         estructura_instruccion = (
-            "ARQUITECTURA MUSICAL AVANZADA (HITMAKER POP FORMAT):\n"
-            "[Verse 1]: Escena inicial y conflicto.\n\n"
-            "[Pre-Chorus]: Tensión creciente de 2 a 4 versos que anticipan el estallido.\n\n"
-            "[Chorus]: El clímax armónico, gancho memorable y contundente.\n\n"
-            "[Post-Chorus]: Gancho rítmico con palabra clave del coro repetida + arreglo vocal de 2 líneas con ad-libs entre paréntesis.\n\n"
-            "[Verse 2]: Evolución lírica de la historia.\n\n"
-            "[Pre-Chorus]: Cohesión melódica (mismo motivo y frases clave del primer Pre-Coro).\n\n"
-            "[Chorus]: Gancho central repetido.\n\n"
-            "[Bridge]: Quiebre armónico y de tempo, máxima vulnerabilidad o revelación.\n\n"
-            "[Chorus Final]: Explosión catártica con ad-libs vocales sugeridos entre paréntesis.\n\n"
-            "[Outro]: Desvanecimiento lírico o remate contundente.\n"
+            "ARQUITECTURA MUSICAL AVANZADA (HITMAKER POP - REGLA DE LÍNEAS ESTRICTA):\n"
+            "- [Verse 1]: Máximo 4 líneas (escena inicial y conflicto).\n\n"
+            "- [Pre-Chorus]: De 2 a 4 líneas (tensión anticipatoria, máximo 4 líneas).\n\n"
+            "- [Chorus]: Máximo 4 líneas (gancho principal explosivo).\n\n"
+            "- [Post-Chorus]: EXACTAMENTE 2 LÍNEAS (gancho rítmico con palabra clave del coro repetida + arreglo vocal de 2 líneas con ad-libs entre paréntesis).\n\n"
+            "- [Verse 2]: Máximo 4 líneas (evolución de la historia).\n\n"
+            "- [Pre-Chorus]: Mismo motivo del primer pre-coro (de 2 a 4 líneas).\n\n"
+            "- [Chorus]: Máximo 4 líneas.\n\n"
+            "- [Bridge]: Máximo 4 líneas (quiebre armónico y de tempo).\n\n"
+            "- [Chorus Final]: Máximo 4 líneas (clímax con ad-libs vocales sugeridos entre paréntesis).\n\n"
+            "- [Outro]: De 2 a 4 líneas (remate o fade out lírico).\n"
             "(Separa rigurosamente cada bloque con doble salto de línea)."
         )
 
@@ -373,12 +374,16 @@ Compón una canción completa con impacto radial basada en las siguientes coorde
 - ESQUEMA DE RIMA: {rima_esquema}.
 
 REGLAS DE ORO OBLIGATORIAS:
-1. CONTROL MÉTRICO DE SÍLABAS (ISOSILABISMO):
+1. CONTROL DE LONGITUD DE SECCIONES (MÁXIMO 4 LÍNEAS / POST-CORO DE 2 LÍNEAS):
+   - CADA SECCIÓN ([Verse], [Pre-Chorus], [Chorus], [Bridge], [Chorus Final], [Outro]) DEBE TENER UN MÁXIMO DE 4 LÍNEAS (VERSOS).
+   - EL [Post-Chorus] DEBE TENER ESTRICTAMENTE 2 LÍNEAS (gancho bailable/vocal ultra memorable).
+   - Prohibido terminantemente escribir estrofas largas de 6 u 8 versos. La simetría pop debe ser impecable.
+
+2. CONTROL MÉTRICO DE SÍLABAS (ISOSILABISMO):
    - Cada verso (línea) DEBE tener rigurosamente entre {min_sil} y {max_sil} sílabas métricas reales (tomando en cuenta sinalefas naturales del español).
    - Prohibido hacer versos cortos recortados (menos de {min_sil} sílabas) o versos largos en prosa (más de {max_sil} sílabas).
-   - Toda la canción debe mantener una cadencia musical simétrica que encaje perfectamente en el compás rítmico.
 
-2. PROHIBICIÓN ABSOLUTA DE RIMA IDÉNTICA O EPÍFORA:
+3. PROHIBICIÓN ABSOLUTA DE RIMA IDÉNTICA O EPÍFORA:
    - Está TERMINANTEMENTE PROHIBIDO terminar dos o más versos con la misma palabra (como repetir la palabra '{frec_info['emocion'].split()[0]}' o cualquier otra al final de las líneas).
    - Cada verso DEBE terminar en una palabra diferente con rimas consonantes o asonantes ricas en español (ejemplo: canción / perdón, herida / vida, olvido / herido).
    - La frecuencia de Hawkins es la ATMÓSFERA EMOCIONAL y psicológica del texto, NUNCA una palabra que debas escribir al final de las líneas.
@@ -392,7 +397,7 @@ Devuelve ÚNICAMENTE los 3 bloques separados por estos títulos exactos:
 ===ESPAÑOL===
 [Aquí la letra completa en español]
 ===INGLES===
-[Aquí la adaptación cantable al inglés con rima equivalente]
+[Aquí la adaptación cantable al inglés con rima equivalente y la misma regla de líneas]
 ===PRODUCCION===
 [BPM, Escala musical, Instrumentos y notas de interpretación]"""
 
@@ -416,7 +421,7 @@ Devuelve ÚNICAMENTE los 3 bloques separados por estos títulos exactos:
     en_txt = patron_en.group(1).strip() if patron_en else ""
     prod_txt = patron_prod.group(1).strip() if patron_prod else ""
 
-    # 3. SALVAGUARDA DE SEGURIDAD: Si por alguna razón el delimitador falló, nunca descartar la letra
+    # 3. Salvaguarda total de entrega de texto
     if len(es_txt) < 30:
         es_txt = salida_limpia
     if len(en_txt) < 30:
@@ -507,8 +512,12 @@ with col_estilo:
 with col_estruct:
     estructura_sel = st.selectbox(
         "Arquitectura Musical:",
-        options=["Avanzada Hitmaker (Con Pre/Post-Coro)", "Simple (Verso - Coro - Puente)"],
-        index=0
+        options=[
+            "Avanzada Hitmaker (Máx 4 líneas / Post-Coro 2 líneas)", 
+            "Simple (Verso - Coro - Puente / Máx 4 líneas)"
+        ],
+        index=0,
+        help="Garantiza bloques simétricos de máximo 4 versos y un Post-Coro estricto de 2 líneas."
     )
 
 with col_pov:
@@ -630,7 +639,7 @@ if btn_componer:
     elif not texto_base:
         st.warning("Escribe una idea en el cajón o haz clic en '🎲 Sorpréndeme con una Idea'.")
     else:
-        with st.spinner(f"Componiendo ({modo_estilo_sel}, métrica de {rango_silabas_sel[0]}-{rango_silabas_sel[1]} sílabas)..."):
+        with st.spinner(f"Componiendo ({modo_estilo_sel}, métrica de {rango_silabas_sel[0]}-{rango_silabas_sel[1]} sílabas, máx 4 líneas)..."):
             try:
                 es_letra, en_letra, guia_prod, modelo_usado = componer_cancion_dual(
                     texto_base=texto_base,
@@ -672,7 +681,7 @@ if st.session_state.get("analisis_hawkins"):
 # ==============================================================
 if st.session_state.get("letra_trans_es"):
     st.markdown("---")
-    st.success(f"🎉 ¡Canción compuesta con éxito! Métrica estricta de {rango_silabas_sel[0]} a {rango_silabas_sel[1]} sílabas.")
+    st.success(f"🎉 ¡Canción compuesta con éxito! Métrica estricta de {rango_silabas_sel[0]} a {rango_silabas_sel[1]} sílabas (Máximo 4 líneas por sección / Post-Coro de 2 líneas).")
 
     tab_es, tab_en, tab_prod = st.tabs([
         "🇪🇸 Versión en Español (Lírica Ritmada)",

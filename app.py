@@ -178,13 +178,13 @@ except Exception:
     pass
 
 # ==============================================================
-# 5. MOTOR GROQ OPTIMIZADO (DETECCIÓN DINÁMICA SIN CACHÉ CORRUPTA)
+# 5. MOTOR GROQ OPTIMIZADO (SOPORTE PARA MODELOS DE RAZONAMIENTO)
 # ==============================================================
 def get_groq_client(api_key: str):
     return Groq(api_key=api_key.strip())
 
 def resolver_modelos_groq(client):
-    """Consulta en tiempo real los modelos disponibles para tu API Key"""
+    """Detecta los modelos disponibles en tu cuenta"""
     try:
         todos = [m.id for m in client.models.list().data]
         chat_models = [
@@ -209,27 +209,46 @@ def resolver_modelos_groq(client):
 
 def llamar_groq_dinamico(client, mensajes, temperature=0.6, json_mode=False):
     modelos = resolver_modelos_groq(client)
-    kwargs = {
-        "messages": mensajes,
-        "temperature": temperature,
-        "max_tokens": 4096,
-    }
-    if json_mode:
-        kwargs["response_format"] = {"type": "json_object"}
-
     ultimo_err = None
+
     for mod in modelos:
+        kwargs = {
+            "model": mod,
+            "messages": mensajes,
+            "temperature": temperature,
+            "max_tokens": 4096,
+        }
+        if json_mode:
+            kwargs["response_format"] = {"type": "json_object"}
+
+        # Si es un modelo de razonamiento (como GPT-OSS o Qwen), suprimimos el canal CoT para recibir el texto limpio
+        if any(r in mod.lower() for r in ["gpt-oss", "qwen3.8"]):
+            kwargs["reasoning_format"] = "hidden"
+
         try:
-            kwargs["model"] = mod
             res = client.chat.completions.create(**kwargs)
-            return res.choices[0].message.content, mod
-        except Exception as e:
-            ultimo_err = e
-            continue
+            msg = res.choices[0].message
+            # Extraer contenido directo o fallback a reasoning si viniera ahí
+            contenido = getattr(msg, 'content', None) or getattr(msg, 'reasoning', None) or ""
+            if contenido:
+                return contenido, mod
+        except Exception:
+            # Si el modelo no aceptó reasoning_format, reintentar sin ese parámetro
+            try:
+                kwargs.pop("reasoning_format", None)
+                res = client.chat.completions.create(**kwargs)
+                msg = res.choices[0].message
+                contenido = getattr(msg, 'content', None) or getattr(msg, 'reasoning', None) or ""
+                if contenido:
+                    return contenido, mod
+            except Exception as e2:
+                ultimo_err = e2
+                continue
+
     raise Exception(f"Falla con los modelos disponibles ({modelos}): {ultimo_err}")
 
 def parsear_json_limpio(texto: str) -> dict:
-    t = texto.strip()
+    t = re.sub(r'<think>.*?</think>', '', texto, flags=re.DOTALL).strip()
     if t.startswith("```json"):
         t = t[7:]
     elif t.startswith("```"):
@@ -242,7 +261,6 @@ def parsear_json_limpio(texto: str) -> dict:
 # 6. MODULADOR HAWKINS EN VIVO (TRANSMUTADOR DE SEMILLA)
 # ==============================================================
 def transmutar_semilla_rapida(texto_base: str, frecuencia_num: int, api_key: str) -> str:
-    """Reescribe la frase del cajón según la frecuencia de Hawkins seleccionada"""
     if not api_key.strip() or not texto_base.strip():
         return texto_base
     try:
@@ -260,12 +278,13 @@ PREMISA BASE:
             [{"role": "user", "content": prompt}],
             temperature=0.4
         )
-        return res.strip().replace('"', '').replace('\n', ' ')
+        limpio = re.sub(r'<think>.*?</think>', '', res, flags=re.DOTALL).strip()
+        return limpio.replace('"', '').replace('\n', ' ')
     except Exception:
         return texto_base
 
 # ==============================================================
-# 7. COMPOSICIÓN MUSICAL ROBUSTA CON REGEX
+# 7. COMPOSICIÓN MUSICAL ROBUSTA CON SALVAGUARDA TOTAL
 # ==============================================================
 def calibrar_hawkins_json(letra_o_idea: str, api_key: str) -> dict:
     client = get_groq_client(api_key)
@@ -383,14 +402,27 @@ Devuelve ÚNICAMENTE los 3 bloques separados por estos títulos exactos:
         temperature=0.6
     )
 
-    # EXTRACCIÓN ROBUSTA MEDIANTE REGEX
-    patron_es = re.search(r'===\s*ESPA?Ñ?OL\s*===\s*(.*?)(?====\s*INGL[EÉ]S\s*===|\Z)', salida_cruda, re.DOTALL | re.IGNORECASE)
-    patron_en = re.search(r'===\s*INGL[EÉ]S\s*===\s*(.*?)(?====\s*PRODUCCI[OÓ]N\s*===|\Z)', salida_cruda, re.DOTALL | re.IGNORECASE)
-    patron_prod = re.search(r'===\s*PRODUCCI[OÓ]N\s*===\s*(.*)', salida_cruda, re.DOTALL | re.IGNORECASE)
+    # 1. Limpiar cualquier residuo de pensamiento <think>
+    salida_limpia = re.sub(r'<think>.*?</think>', '', salida_cruda, flags=re.DOTALL).strip()
+    if not salida_limpia:
+        salida_limpia = salida_cruda.strip()
 
-    es_txt = patron_es.group(1).strip() if patron_es else salida_cruda.strip()
-    en_txt = patron_en.group(1).strip() if patron_en else "Versión en inglés integrada en la generación principal."
-    prod_txt = patron_prod.group(1).strip() if patron_prod else f"Estilo sugerido: {genero_ritmo} | Métrica: {min_sil}-{max_sil} sílabas"
+    # 2. Extracción por expresiones regulares flexibles
+    patron_es = re.search(r'===\s*ESPA?Ñ?OL\s*===\s*(.*?)(?====\s*INGL[EÉ]S\s*===|\Z)', salida_limpia, re.DOTALL | re.IGNORECASE)
+    patron_en = re.search(r'===\s*INGL[EÉ]S\s*===\s*(.*?)(?====\s*PRODUCCI[OÓ]N\s*===|\Z)', salida_limpia, re.DOTALL | re.IGNORECASE)
+    patron_prod = re.search(r'===\s*PRODUCCI[OÓ]N\s*===\s*(.*)', salida_limpia, re.DOTALL | re.IGNORECASE)
+
+    es_txt = patron_es.group(1).strip() if patron_es else ""
+    en_txt = patron_en.group(1).strip() if patron_en else ""
+    prod_txt = patron_prod.group(1).strip() if patron_prod else ""
+
+    # 3. SALVAGUARDA DE SEGURIDAD: Si por alguna razón el delimitador falló, nunca descartar la letra
+    if len(es_txt) < 30:
+        es_txt = salida_limpia
+    if len(en_txt) < 30:
+        en_txt = "Adaptación integrada en la versión principal."
+    if len(prod_txt) < 10:
+        prod_txt = f"Estilo: {genero_ritmo} | Métrica: {min_sil}-{max_sil} sílabas"
 
     return es_txt, en_txt, prod_txt, mod_usado
 
@@ -449,7 +481,6 @@ with col_top_b:
             st.session_state["texto_input"] = idea_sel
         st.rerun()
 
-# CAJÓN PRINCIPAL MULTIFUNCIÓN (Sin callbacks que bloqueen el botón)
 texto_actual = st.text_area(
     "Pega aquí una letra existente (para analizar) O escribe tu idea / historia cotidiana:",
     value=st.session_state["texto_input"],
@@ -539,7 +570,6 @@ frec_seleccionada = st.select_slider(
     format_func=lambda x: HAWKINS_SCALE[x]["nombre"]
 )
 
-# Sincronización limpia al mover el slider sin romper los botones
 if frec_seleccionada != st.session_state["slider_hawkins"]:
     st.session_state["slider_hawkins"] = frec_seleccionada
     base = st.session_state["historia_base"].strip() or st.session_state["texto_input"].strip()
@@ -588,6 +618,7 @@ if btn_analizar:
             try:
                 diag = calibrar_hawkins_json(texto_a_evaluar, api_key_activa)
                 st.session_state["analisis_hawkins"] = diag
+                st.rerun()
             except Exception as e:
                 st.error(f"Error al analizar la letra: {e}")
 
@@ -615,7 +646,7 @@ if btn_componer:
                 st.session_state["letra_trans_es"] = es_letra
                 st.session_state["letra_trans_en"] = en_letra
                 st.session_state["guia_produccion"] = guia_prod
-                st.toast(f"¡Composición completada con éxito usando {modelo_usado}!")
+                st.rerun()
             except Exception as e:
                 st.error(f"Error en el motor de composición: {e}")
 
